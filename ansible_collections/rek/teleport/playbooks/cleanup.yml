@@ -1,0 +1,13 @@
+---
+# Completely remove Teleport from every node and return them to a clean state.
+#
+# DANGER: with teleport_cleanup_remove_data=true (default) this WIPES cluster
+# state (the Auth backend, host certificates). Run only when you intend a fresh
+# build. Add `-e teleport_cleanup_remove_data=false` to keep /var/lib/teleport.
+#
+#   ansible-playbook -i playbooks/inventory/hw01.yml playbooks/cleanup.yml
+- name: Remove Teleport from all nodes
+  hosts: teleport_auth:teleport_proxy
+  become: true
+  roles:
+    - role: rek.teleport.teleport_cleanup

@@ -17,8 +17,14 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `teleport_proxy` role: renders and manages the Proxy Service `teleport.yaml`
   including cluster-join configuration (auth server, CA pin, join token) and
   TLS via ACME or supplied key pairs.
-- Sample inventory, `group_vars`, and `site.yml` / `auth.yml` / `proxy.yml`
-  playbooks.
+- `teleport_cleanup` role: completely removes Teleport (service, unit, package,
+  yum repo, tarball binaries, config, env file, data dir, license and managed
+  user) to return a host to a clean state for a fresh install. Idempotent and
+  safe to run on a host that never had Teleport.
+- Sample inventory, `group_vars`, and `site.yml` / `auth.yml` / `proxy.yml` /
+  `cleanup.yml` playbooks.
+- Per-environment inventories (`hosts.yml`, `hw01.yml`, `dev02.yml`) with
+  jump-host (SSH `ProxyJump`) bootstrap wiring; see `docs/bastion.md`.
 - yamllint and ansible-lint (production profile) configuration.
 
 ### Notes

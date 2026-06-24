@@ -1,0 +1,89 @@
+---
+# Safe to run on a host that never had Teleport: every step is guarded or
+# state=absent, so a clean machine yields no changes and no errors.
+
+- name: Collect service facts
+  ansible.builtin.service_facts:
+
+- name: Stop and disable the Teleport service
+  ansible.builtin.systemd_service:
+    name: "{{ teleport_service_name }}.service"
+    state: stopped
+    enabled: false
+  when: (teleport_service_name ~ '.service') in (ansible_facts.services | default({}))
+
+- name: Remove the systemd unit file
+  ansible.builtin.file:
+    path: "/etc/systemd/system/{{ teleport_service_name }}.service"
+    state: absent
+  notify:
+    - Reload systemd daemon
+    - Reset failed Teleport unit
+
+- name: Remove the Teleport package
+  ansible.builtin.dnf:
+    name:
+      - teleport
+      - teleport-ent
+    state: absent
+    autoremove: true
+  when: teleport_cleanup_remove_package | bool
+
+- name: Remove the Teleport yum repository
+  ansible.builtin.yum_repository:
+    name: teleport
+    state: absent
+  when: teleport_cleanup_remove_repo | bool
+
+- name: Remove tarball-installed binaries
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop: "{{ teleport_cleanup_binaries }}"
+  when: teleport_cleanup_remove_binaries | bool
+
+- name: Remove Teleport configuration and runtime files
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ teleport_config_path }}"
+    - "{{ teleport_env_file }}"
+    - /run/teleport.pid
+
+- name: Remove the Teleport log file
+  ansible.builtin.file:
+    path: "{{ teleport_log_output }}"
+    state: absent
+  when:
+    - teleport_log_output is string
+    - teleport_log_output.startswith('/')
+
+- name: Remove the Enterprise license file
+  ansible.builtin.file:
+    path: "{{ teleport_license_path }}"
+    state: absent
+  when: teleport_cleanup_remove_data | bool
+
+- name: Wipe the Teleport data directory
+  ansible.builtin.file:
+    path: "{{ teleport_data_dir }}"
+    state: absent
+  when: teleport_cleanup_remove_data | bool
+
+- name: Remove the Teleport system user
+  ansible.builtin.user:
+    name: "{{ teleport_user }}"
+    state: absent
+    remove: false
+  when:
+    - teleport_cleanup_remove_user | bool
+    - teleport_manage_user | bool
+
+- name: Remove the Teleport system group
+  ansible.builtin.group:
+    name: "{{ teleport_group }}"
+    state: absent
+  when:
+    - teleport_cleanup_remove_user | bool
+    - teleport_manage_user | bool

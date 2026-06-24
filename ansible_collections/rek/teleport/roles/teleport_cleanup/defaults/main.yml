@@ -1,0 +1,45 @@
+---
+# ===========================================================================
+# teleport_cleanup — completely remove Teleport from a host and return it to a
+# clean state, ready for a fresh install + config.
+#
+# This role intentionally does NOT depend on teleport_install (so it can never
+# reinstall anything). It mirrors the base path/identity variables so it can be
+# run standalone, and reuses the same variable NAMES as teleport_install — so if
+# you customised them for the install, cleanup picks up the same values.
+# ===========================================================================
+
+# --- What to remove (toggles) ----------------------------------------------
+teleport_cleanup_remove_package: true     # dnf-remove the teleport(-ent) package
+teleport_cleanup_remove_repo: true        # remove the yum repository definition
+teleport_cleanup_remove_binaries: true    # remove /usr/local/bin/* (tarball installs)
+teleport_cleanup_remove_data: true        # WIPE the data dir: cluster state, host
+                                          # certs, license. Required for a truly
+                                          # fresh cluster identity.
+teleport_cleanup_remove_user: true        # remove the teleport system user/group
+                                          # (only if it was managed, i.e. non-root)
+
+# --- Identity / paths (kept in sync with teleport_install) ------------------
+teleport_edition: enterprise
+teleport_package_name: "{{ 'teleport-ent' if teleport_edition == 'enterprise' else 'teleport' }}"
+
+teleport_service_name: teleport
+teleport_data_dir: /var/lib/teleport
+teleport_config_path: /etc/teleport.yaml
+teleport_env_file: /etc/sysconfig/teleport
+teleport_license_path: "{{ teleport_data_dir }}/license.pem"
+teleport_log_output: stderr
+
+teleport_run_as_root: true
+teleport_user: "{{ 'root' if teleport_run_as_root else 'teleport' }}"
+teleport_group: "{{ 'root' if teleport_run_as_root else 'teleport' }}"
+teleport_manage_user: "{{ not teleport_run_as_root }}"
+
+# Binaries dropped by the tarball method's bundled `./install` script.
+teleport_cleanup_binaries:
+  - /usr/local/bin/teleport
+  - /usr/local/bin/tctl
+  - /usr/local/bin/tsh
+  - /usr/local/bin/tbot
+  - /usr/local/bin/fdpass-teleport
+  - /usr/local/bin/teleport-update

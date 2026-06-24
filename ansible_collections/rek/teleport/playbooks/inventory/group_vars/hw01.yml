@@ -13,3 +13,12 @@ teleport_ca_pin:
 # Public entrypoint + ACME contact.
 teleport_proxy_public_addr: "teleport.hw01.example.com:443"
 teleport_proxy_acme_email: "ops@example.com"
+
+# --- Bastion / jump host ----------------------------------------------------
+# These hosts are not reachable directly; SSH is proxied through a jump host.
+# ProxyJump tunnels the connection end-to-end — your key/agent authenticates
+# from the controller and is never copied onto the bastion. See docs/bastion.md.
+teleport_bastion: "bastion@jump.hw01.example.com"
+ansible_ssh_common_args: >-
+  -o ProxyJump={{ teleport_bastion }}
+  -o StrictHostKeyChecking=accept-new

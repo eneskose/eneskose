@@ -1,0 +1,55 @@
+---
+argument_specs:
+  main:
+    short_description: Completely remove Teleport and return the host to a clean state.
+    description:
+      - Stops and disables the service, removes the systemd unit, package, yum
+        repository, tarball binaries, configuration, environment file, license,
+        data directory and (optionally) the managed system user.
+      - Idempotent and safe to run on a host that never had Teleport installed.
+    options:
+      teleport_cleanup_remove_package:
+        type: bool
+        default: true
+        description: Uninstall the teleport / teleport-ent package via dnf.
+      teleport_cleanup_remove_repo:
+        type: bool
+        default: true
+        description: Remove the Teleport yum repository definition.
+      teleport_cleanup_remove_binaries:
+        type: bool
+        default: true
+        description: Remove /usr/local/bin Teleport binaries left by tarball installs.
+      teleport_cleanup_remove_data:
+        type: bool
+        default: true
+        description: >-
+          Wipe the data directory (teleport_data_dir) and license. This destroys
+          cluster state and host certificates — required for a fresh cluster
+          identity, but irreversible. Set false to preserve state.
+      teleport_cleanup_remove_user:
+        type: bool
+        default: true
+        description: >-
+          Remove the Teleport system user/group, but only when it was managed
+          (teleport_run_as_root=false). Never touches root.
+      teleport_cleanup_binaries:
+        type: list
+        elements: str
+        description: Absolute paths of binaries removed for tarball installs.
+      teleport_service_name:
+        type: str
+        default: teleport
+        description: systemd service name to stop/disable/remove.
+      teleport_data_dir:
+        type: str
+        default: /var/lib/teleport
+        description: Data directory wiped when teleport_cleanup_remove_data is true.
+      teleport_config_path:
+        type: str
+        default: /etc/teleport.yaml
+        description: Path of the Teleport config file to remove.
+      teleport_env_file:
+        type: str
+        default: /etc/sysconfig/teleport
+        description: Path of the environment file to remove.

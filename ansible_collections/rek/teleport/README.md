@@ -14,9 +14,11 @@ VMs. The collection provides composable roles for the **Auth Service** and the
 | [`teleport_install`](roles/teleport_install/README.md) | Base layer: install `teleport-ent` (repo or tarball), system user, data dir, Enterprise license, hardened systemd unit, shared handlers. |
 | [`teleport_auth`](roles/teleport_auth/README.md) | Render & run the **Auth Service** (cluster CA, backend, tokens, MFA). Private network. |
 | [`teleport_proxy`](roles/teleport_proxy/README.md) | Render & run the **Proxy Service** joined to Auth (CA pin + token, TLS/ACME). Internet-facing. |
+| [`teleport_cleanup`](roles/teleport_cleanup/README.md) | Completely remove Teleport (service, package, repo, binaries, config, data, user) and return the host to a clean state for a fresh install. |
 
 The two service roles depend on `teleport_install`, so applying a service role
-pulls the base role in automatically. See
+pulls the base role in automatically. `teleport_cleanup` is standalone and
+depends on nothing. See
 [`docs/architecture.md`](docs/architecture.md) for the design rationale, the
 Auth↔Proxy join flow, and the network-port reference.
 
@@ -69,6 +71,26 @@ environment under [`execution-environment/`](../../../execution-environment/).
    ansible-playbook -i playbooks/inventory/hosts.yml \
      playbooks/proxy.yml --ask-vault-pass
    ```
+
+### Hosts behind a jump host
+
+When the nodes aren't reachable directly, connections are proxied through a
+bastion using SSH `ProxyJump`, configured per environment in
+`group_vars/<env>.yml` (`teleport_bastion` + `ansible_ssh_common_args`). No
+`~/.ssh/config` needed. See [`docs/bastion.md`](docs/bastion.md) for host-key
+handling, auth options, and AAP/EE notes.
+
+### Cleanup / fresh start
+
+Remove Teleport from every node and return them to a clean state:
+
+```bash
+ansible-playbook -i playbooks/inventory/hosts.yml playbooks/cleanup.yml
+```
+
+⚠️ Defaults wipe `/var/lib/teleport` (cluster state, certs, license). Pass
+`-e teleport_cleanup_remove_data=false` to keep the data directory. See the
+[`teleport_cleanup`](roles/teleport_cleanup/README.md) role.
 
 ### Minimal playbook
 

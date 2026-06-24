@@ -1,0 +1,51 @@
+---
+argument_specs:
+  main:
+    short_description: Read-only health/state verification of a Teleport cluster.
+    description:
+      - Gathers per-node service state, version and readiness, the proxy web API
+        status, and tctl cluster status/node count on auth nodes, then prints a
+        fleet summary and a version-drift line.
+      - Makes no changes and is check-mode safe. With teleport_status_assert,
+        fails the play on any unhealthy result.
+    options:
+      teleport_status_assert:
+        type: bool
+        default: false
+        description: Fail the play when a critical check is unhealthy.
+      teleport_status_check_endpoints:
+        type: bool
+        default: true
+        description: Probe /readyz on the diagnostic address (needs teleport_diag_addr).
+      teleport_status_check_proxy_ping:
+        type: bool
+        default: true
+        description: Probe https://<public_addr>/webapi/ping on proxy nodes.
+      teleport_status_check_cluster:
+        type: bool
+        default: true
+        description: Run tctl status and nodes ls on auth nodes (needs privilege).
+      teleport_status_verify_tls:
+        type: bool
+        default: true
+        description: Validate the TLS certificate during the proxy ping.
+      teleport_bin:
+        type: str
+        default: /usr/local/bin/teleport
+        description: Path to the teleport binary (used for `teleport version`).
+      teleport_tctl_bin:
+        type: str
+        default: "{{ teleport_bin | dirname }}/tctl"
+        description: Path to the tctl binary.
+      teleport_service_name:
+        type: str
+        default: teleport
+        description: systemd service name to inspect.
+      teleport_diag_addr:
+        type: str
+        default: ""
+        description: Diagnostic listen address (host:port); empty skips /readyz.
+      teleport_proxy_public_addr:
+        type: str
+        default: ""
+        description: Public proxy address for the web API ping; empty skips it.

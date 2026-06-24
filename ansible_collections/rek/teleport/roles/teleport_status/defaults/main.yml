@@ -1,0 +1,31 @@
+---
+# ===========================================================================
+# teleport_status — read-only verification of Teleport node & cluster health.
+#
+# Makes NO changes: every task is changed_when:false and runs even under
+# --check (check_mode:false). Depends on nothing. Reports a per-node + fleet
+# summary by default; set teleport_status_assert=true to fail the play on any
+# unhealthy result (use as a CI / post-deploy gate).
+# ===========================================================================
+
+# --- Behaviour --------------------------------------------------------------
+teleport_status_assert: false             # fail the play when a check is unhealthy
+
+# --- Which checks to run ----------------------------------------------------
+teleport_status_check_endpoints: true     # /readyz on the diagnostic address
+teleport_status_check_proxy_ping: true    # https://<public_addr>/webapi/ping
+teleport_status_check_cluster: true       # tctl status + nodes ls on auth nodes
+teleport_status_verify_tls: true          # validate TLS for the proxy ping
+
+# --- Paths / identity (shared with teleport_install) ------------------------
+teleport_bin: /usr/local/bin/teleport
+teleport_tctl_bin: "{{ teleport_bin | dirname }}/tctl"
+teleport_service_name: teleport
+
+# Diagnostic listen address (e.g. "0.0.0.0:3000"). Empty by default — the
+# readiness probe is skipped unless this is set (and enabled on the node).
+teleport_diag_addr: ""
+
+# Public proxy address used for the web API ping (env-specific; usually set in
+# group_vars). Empty -> the proxy ping is skipped.
+teleport_proxy_public_addr: ""

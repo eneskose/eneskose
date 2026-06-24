@@ -1,0 +1,119 @@
+---
+# All tasks are read-only and check-mode safe.
+
+- name: Collect service facts
+  ansible.builtin.service_facts:
+
+- name: Get Teleport version
+  ansible.builtin.command: "{{ teleport_bin }} version"
+  register: _tp_version
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Determine diagnostic endpoint port
+  ansible.builtin.set_fact:
+    _tp_diag_port: "{{ teleport_diag_addr.split(':')[-1] if (teleport_diag_addr | length > 0) else '' }}"
+
+- name: Probe Teleport readiness endpoint
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ _tp_diag_port }}/readyz"
+    status_code: [200]
+  register: _tp_readyz
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  when:
+    - teleport_status_check_endpoints | bool
+    - _tp_diag_port | length > 0
+
+- name: Probe Proxy web API (ping)
+  ansible.builtin.uri:
+    url: "https://{{ teleport_proxy_public_addr }}/webapi/ping"
+    validate_certs: "{{ teleport_status_verify_tls | bool }}"
+    status_code: [200]
+  register: _tp_ping
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  when:
+    - "'teleport_proxy' in group_names"
+    - teleport_status_check_proxy_ping | bool
+    - teleport_proxy_public_addr | length > 0
+
+- name: Query Teleport cluster status (tctl)
+  ansible.builtin.command: "{{ teleport_tctl_bin }} status"
+  register: _tp_tctl_status
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  become: true
+  when:
+    - "'teleport_auth' in group_names"
+    - teleport_status_check_cluster | bool
+
+- name: List joined Teleport nodes (tctl)
+  ansible.builtin.command: "{{ teleport_tctl_bin }} nodes ls --format=json"
+  register: _tp_nodes
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  become: true
+  when:
+    - "'teleport_auth' in group_names"
+    - teleport_status_check_cluster | bool
+
+- name: Assemble per-host health summary
+  ansible.builtin.set_fact:
+    teleport_status:
+      host: "{{ inventory_hostname }}"
+      roles: "{{ (group_names | intersect(['teleport_auth', 'teleport_proxy'])) | join(',') }}"
+      version: >-
+        {{ _tp_version.stdout_lines[0] | default('') | regex_search('v[0-9]+\.[0-9]+\.[0-9]+') | default('unknown', true) }}
+      service_active: >-
+        {{ 'ok' if (ansible_facts.services[teleport_service_name ~ '.service'].state | default('') == 'running') else 'fail' }}
+      service_enabled: >-
+        {{ 'ok' if (ansible_facts.services[teleport_service_name ~ '.service'].status | default('') == 'enabled') else 'fail' }}
+      readyz: >-
+        {{ ('skipped' if not (teleport_status_check_endpoints | bool and (_tp_diag_port | length > 0))
+            else ('ok' if (_tp_readyz.status | default(0)) == 200 else 'fail')) }}
+      proxy_ping: >-
+        {{ ('n/a' if 'teleport_proxy' not in group_names
+            else ('skipped' if not (teleport_status_check_proxy_ping | bool and (teleport_proxy_public_addr | length > 0))
+            else ('ok' if (_tp_ping.status | default(0)) == 200 else 'fail'))) }}
+      cluster: >-
+        {{ ('n/a' if 'teleport_auth' not in group_names
+            else ('skipped' if not (teleport_status_check_cluster | bool)
+            else ('ok' if (_tp_tctl_status.rc | default(1)) == 0 else 'fail'))) }}
+      nodes: >-
+        {{ ('n/a' if ('teleport_auth' not in group_names or not (teleport_status_check_cluster | bool))
+            else ((_tp_nodes.stdout | default('[]') | from_json | length) if (_tp_nodes.rc | default(1)) == 0 else 'fail')) }}
+
+- name: Build fleet report
+  ansible.builtin.set_fact:
+    _tp_fleet: "{{ ansible_play_hosts | map('extract', hostvars, 'teleport_status') | list }}"
+  run_once: true
+
+- name: Show Teleport health report
+  ansible.builtin.debug:
+    msg: "{{ _tp_fleet }}"
+  run_once: true
+
+- name: Show Teleport versions in use (drift check)
+  ansible.builtin.debug:
+    msg: >-
+      Versions: {{ _tp_fleet | map(attribute='version') | unique | list }}
+      {{ '— DRIFT: more than one version present' if ((_tp_fleet | map(attribute='version') | unique | list | length) > 1) else '' }}
+  run_once: true
+
+- name: Assert node and cluster health
+  ansible.builtin.assert:
+    that:
+      - teleport_status.service_active == 'ok'
+      - teleport_status.readyz != 'fail'
+      - teleport_status.proxy_ping != 'fail'
+      - teleport_status.cluster != 'fail'
+    fail_msg: "Teleport health check FAILED on {{ inventory_hostname }}: {{ teleport_status }}"
+    success_msg: "{{ inventory_hostname }} healthy: {{ teleport_status }}"
+    quiet: true
+  when: teleport_status_assert | bool

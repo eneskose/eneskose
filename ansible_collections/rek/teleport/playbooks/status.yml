@@ -1,0 +1,13 @@
+---
+# Read-only health/state verification of the Teleport cluster.
+#
+#   ansible-playbook -i playbooks/inventory/hw01.yml playbooks/status.yml
+#
+# Strict gate (fail the play on any unhealthy result):
+#   ... playbooks/status.yml -e teleport_status_assert=true
+- name: Verify Teleport cluster health
+  hosts: teleport_auth:teleport_proxy
+  become: true
+  gather_facts: false
+  roles:
+    - role: rek.teleport.teleport_status

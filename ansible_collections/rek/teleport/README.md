@@ -15,10 +15,11 @@ VMs. The collection provides composable roles for the **Auth Service** and the
 | [`teleport_auth`](roles/teleport_auth/README.md) | Render & run the **Auth Service** (cluster CA, backend, tokens, MFA). Private network. |
 | [`teleport_proxy`](roles/teleport_proxy/README.md) | Render & run the **Proxy Service** joined to Auth (CA pin + token, TLS/ACME). Internet-facing. |
 | [`teleport_cleanup`](roles/teleport_cleanup/README.md) | Completely remove Teleport (service, package, repo, binaries, config, data, user) and return the host to a clean state for a fresh install. |
+| [`teleport_status`](roles/teleport_status/README.md) | Read-only health/state verification (service, version, `/readyz`, proxy ping, `tctl` cluster status, version drift). Reports by default; can assert as a CI/post-deploy gate. |
 
 The two service roles depend on `teleport_install`, so applying a service role
-pulls the base role in automatically. `teleport_cleanup` is standalone and
-depends on nothing. See
+pulls the base role in automatically. `teleport_cleanup` and `teleport_status`
+are standalone and depend on nothing. See
 [`docs/architecture.md`](docs/architecture.md) for the design rationale, the
 Auth↔Proxy join flow, and the network-port reference.
 
@@ -79,6 +80,16 @@ bastion using SSH `ProxyJump`, configured per environment in
 `group_vars/<env>.yml` (`teleport_bastion` + `ansible_ssh_common_args`). No
 `~/.ssh/config` needed. See [`docs/bastion.md`](docs/bastion.md) for host-key
 handling, auth options, and AAP/EE notes.
+
+### Verify cluster health
+
+```bash
+ansible-playbook -i playbooks/inventory/hosts.yml playbooks/status.yml
+```
+
+Read-only; prints a per-node + fleet summary. Add `-e teleport_status_assert=true`
+to fail on any unhealthy result (CI/post-deploy gate). See the
+[`teleport_status`](roles/teleport_status/README.md) role.
 
 ### Cleanup / fresh start
 

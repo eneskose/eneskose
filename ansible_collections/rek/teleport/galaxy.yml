@@ -1,5 +1,5 @@
 ---
-namespace: eneskose
+namespace: rek
 name: teleport
 version: 1.0.0
 readme: README.md
@@ -24,7 +24,7 @@ tags:
 # collection dependencies. Pin them here if you extend it (e.g. ansible.posix).
 dependencies: {}
 repository: https://github.com/eneskose/eneskose
-documentation: https://github.com/eneskose/eneskose/tree/master/ansible_collections/eneskose/teleport
+documentation: https://github.com/eneskose/eneskose/tree/master/ansible_collections/rek/teleport
 homepage: https://github.com/eneskose/eneskose
 issues: https://github.com/eneskose/eneskose/issues
 build_ignore:

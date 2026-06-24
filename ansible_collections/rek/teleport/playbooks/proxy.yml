@@ -5,4 +5,4 @@
   become: true
   gather_facts: true
   roles:
-    - role: eneskose.teleport.teleport_proxy
+    - role: rek.teleport.teleport_proxy

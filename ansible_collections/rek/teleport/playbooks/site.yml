@@ -9,11 +9,11 @@
   become: true
   gather_facts: true
   roles:
-    - role: eneskose.teleport.teleport_auth
+    - role: rek.teleport.teleport_auth
 
 - name: Deploy Teleport Proxy Service
   hosts: teleport_proxy
   become: true
   gather_facts: true
   roles:
-    - role: eneskose.teleport.teleport_proxy
+    - role: rek.teleport.teleport_proxy

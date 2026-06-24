@@ -1,4 +1,4 @@
-# Role: `eneskose.teleport.teleport_auth`
+# Role: `rek.teleport.teleport_auth`
 
 Configures and runs the **Teleport Auth Service** on a dedicated instance. The
 Auth Service is the cluster's certificate authority and source of truth; it
@@ -32,7 +32,7 @@ See [`defaults/main.yml`](defaults/main.yml). Highlights:
 - hosts: teleport_auth
   become: true
   roles:
-    - role: eneskose.teleport.teleport_auth
+    - role: rek.teleport.teleport_auth
       vars:
         teleport_auth_cluster_name: "teleport.example.com"
         teleport_auth_second_factor: "webauthn"

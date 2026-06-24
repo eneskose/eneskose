@@ -5,7 +5,7 @@
 .ansible/
 
 # Collection build artifacts
-eneskose-teleport-*.tar.gz
+rek-teleport-*.tar.gz
 
 # Python
 __pycache__/

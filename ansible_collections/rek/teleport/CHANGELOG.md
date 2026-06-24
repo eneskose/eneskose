@@ -8,7 +8,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- Initial release of the `eneskose.teleport` collection.
+- Initial release of the `rek.teleport` collection.
 - `teleport_install` role: repository/tarball installation of Teleport
   Enterprise (`teleport-ent`), system user/directories, Enterprise license
   placement, systemd unit and environment file, shared restart/reload handlers.

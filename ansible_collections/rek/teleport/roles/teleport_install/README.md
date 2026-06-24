@@ -1,4 +1,4 @@
-# Role: `eneskose.teleport.teleport_install`
+# Role: `rek.teleport.teleport_install`
 
 Base role that installs Teleport and provisions everything common to every
 node type. It is a dependency of both `teleport_auth` and `teleport_proxy`, so
@@ -40,7 +40,7 @@ See [`defaults/main.yml`](defaults/main.yml) and
 - hosts: teleport_nodes
   become: true
   roles:
-    - role: eneskose.teleport.teleport_install
+    - role: rek.teleport.teleport_install
       vars:
         teleport_edition: enterprise
         teleport_repo_channel: stable/v17

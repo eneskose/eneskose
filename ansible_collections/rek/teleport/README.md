@@ -1,4 +1,4 @@
-# Ansible Collection — `eneskose.teleport`
+# Ansible Collection — `rek.teleport`
 
 Deploy and manage **self-hosted Teleport Enterprise (PAM)** clusters on Linux
 VMs. The collection provides composable roles for the **Auth Service** and the
@@ -32,11 +32,11 @@ Auth↔Proxy join flow, and the network-port reference.
 
 ```bash
 # From a local checkout of this repo:
-ansible-galaxy collection install ./ansible_collections/eneskose/teleport
+ansible-galaxy collection install ./ansible_collections/rek/teleport
 
 # Or build & install a tarball:
-ansible-galaxy collection build ansible_collections/eneskose/teleport
-ansible-galaxy collection install eneskose-teleport-1.0.0.tar.gz
+ansible-galaxy collection build ansible_collections/rek/teleport
+ansible-galaxy collection install rek-teleport-1.0.0.tar.gz
 ```
 
 ## Quick start
@@ -67,7 +67,7 @@ ansible-galaxy collection install eneskose-teleport-1.0.0.tar.gz
 - hosts: teleport_auth
   become: true
   roles:
-    - role: eneskose.teleport.teleport_auth
+    - role: rek.teleport.teleport_auth
       vars:
         teleport_license_src: "files/license.pem"   # vaulted
         teleport_auth_cluster_name: "teleport.example.com"
@@ -75,7 +75,7 @@ ansible-galaxy collection install eneskose-teleport-1.0.0.tar.gz
 - hosts: teleport_proxy
   become: true
   roles:
-    - role: eneskose.teleport.teleport_proxy
+    - role: rek.teleport.teleport_proxy
       vars:
         teleport_license_src: "files/license.pem"
         teleport_auth_server: "10.0.1.10:3025"

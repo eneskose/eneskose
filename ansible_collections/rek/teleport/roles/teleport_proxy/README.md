@@ -1,4 +1,4 @@
-# Role: `eneskose.teleport.teleport_proxy`
+# Role: `rek.teleport.teleport_proxy`
 
 Configures and runs the **Teleport Proxy Service** on a dedicated,
 internet-facing instance, joined to an existing Auth Service. The Proxy is the
@@ -35,7 +35,7 @@ See [`defaults/main.yml`](defaults/main.yml). Highlights:
 - hosts: teleport_proxy
   become: true
   roles:
-    - role: eneskose.teleport.teleport_proxy
+    - role: rek.teleport.teleport_proxy
       vars:
         teleport_auth_server: "10.0.1.10:3025"
         teleport_ca_pin:

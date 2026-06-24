@@ -1,18 +1,11 @@
 ---
-# Proxy Service group variables.
-
-# Reach the Auth Service over the private network (host:3025).
-teleport_auth_server: "10.0.1.10:3025"
-
-# CA pin obtained from `tctl status` on the Auth host (strongly recommended).
-teleport_ca_pin:
-  - "sha256:REPLACE_WITH_REAL_PIN"
+# Proxy Service group variables — environment-independent defaults.
+# Environment-specific values (auth server, CA pin, public address, ACME email)
+# live in the per-environment group_vars: example.yml / hw01.yml / dev02.yml.
 
 # Join token (vault-encrypt).
 teleport_join_token: "{{ vault_teleport_join_token }}"
 
-# Public entrypoint and TLS.
-teleport_proxy_public_addr: "teleport.example.com:443"
+# TLS via ACME/Let's Encrypt (set false to use teleport_proxy_https_keypairs).
 teleport_proxy_web_listen_addr: "0.0.0.0:443"
 teleport_proxy_acme_enabled: true
-teleport_proxy_acme_email: "ops@example.com"

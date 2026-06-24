@@ -1,0 +1,16 @@
+---
+# Environment: dev02. Dedicated Auth and Proxy instances.
+# Environment-specific variables live in group_vars/dev02.yml.
+# Usage: ansible-playbook -i playbooks/inventory/dev02.yml playbooks/site.yml
+all:
+  children:
+    dev02:
+      children:
+        teleport_auth:
+          hosts:
+            auth1.dev02.example.com:
+              ansible_host: 10.30.2.10
+        teleport_proxy:
+          hosts:
+            proxy1.dev02.example.com:
+              ansible_host: 10.30.2.20

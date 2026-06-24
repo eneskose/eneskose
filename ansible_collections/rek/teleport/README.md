@@ -46,7 +46,12 @@ environment under [`execution-environment/`](../../../execution-environment/).
 ## Quick start
 
 1. Edit the sample inventory and group vars under
-   [`playbooks/inventory/`](playbooks/inventory/).
+   [`playbooks/inventory/`](playbooks/inventory/). Each environment has its own
+   inventory file — `hosts.yml` (example), `hw01.yml`, `dev02.yml` — plus a
+   matching `group_vars/<env>.yml` for environment-specific values (cluster
+   name, public address, Auth server, CA pin). Shared role defaults stay in
+   `group_vars/teleport_auth.yml` / `teleport_proxy.yml`; pick an environment
+   by pointing `-i` at its file.
 2. Vault-encrypt your secrets (license, join token):
    ```bash
    ansible-vault encrypt_string 'proxy,node:<token>' --name vault_teleport_join_token

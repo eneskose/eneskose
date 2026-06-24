@@ -1,11 +1,11 @@
 ---
-# Auth Service group variables.
-teleport_auth_cluster_name: "teleport.example.com"
+# Auth Service group variables — environment-independent defaults.
+# Environment-specific values (cluster name, WebAuthn RP ID) live in the
+# per-environment group_vars: example.yml / hw01.yml / dev02.yml.
 teleport_auth_listen_addr: "0.0.0.0:3025"
 
 # Recommended: hardware-backed MFA.
 teleport_auth_second_factor: "webauthn"
-teleport_auth_webauthn_rp_id: "teleport.example.com"
 
 # Bootstrap join token for proxies/nodes (vault-encrypt the value!).
 teleport_auth_tokens:

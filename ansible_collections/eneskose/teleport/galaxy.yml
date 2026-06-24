@@ -1,0 +1,36 @@
+---
+namespace: eneskose
+name: teleport
+version: 1.0.0
+readme: README.md
+authors:
+  - Enes Köse <enes.koese@gmail.com>
+description: >-
+  Deploy and manage self-hosted Teleport Enterprise (PAM) clusters on Linux
+  virtual machines. Provides composable roles for the Auth Service and the
+  Proxy Service running on dedicated instances.
+license:
+  - Apache-2.0
+tags:
+  - teleport
+  - pam
+  - security
+  - ssh
+  - zerotrust
+  - identity
+  - infrastructure
+  - system
+# This collection only uses ansible.builtin modules so it has no runtime
+# collection dependencies. Pin them here if you extend it (e.g. ansible.posix).
+dependencies: {}
+repository: https://github.com/eneskose/eneskose
+documentation: https://github.com/eneskose/eneskose/tree/master/ansible_collections/eneskose/teleport
+homepage: https://github.com/eneskose/eneskose
+issues: https://github.com/eneskose/eneskose/issues
+build_ignore:
+  - .github
+  - .gitignore
+  - molecule
+  - tests
+  - "*.tar.gz"
+  - "*.retry"

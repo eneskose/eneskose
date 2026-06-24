@@ -1,0 +1,78 @@
+---
+# ===========================================================================
+# teleport_install — base role shared by teleport_auth and teleport_proxy.
+# These variables are intentionally NOT prefixed per-role: they describe the
+# node-global Teleport identity/paths and are consumed by the service roles
+# too (which depend on this role).
+# ===========================================================================
+
+# --- Edition & version ------------------------------------------------------
+# 'enterprise' installs the `teleport-ent` package (requires a license file).
+# 'oss' installs the community `teleport` package.
+teleport_edition: enterprise
+
+# How to install: 'repository' (apt/yum) or 'tarball' (download from CDN).
+teleport_install_method: repository
+
+# Release channel for the package repositories. REVIEW THIS for your target
+# major version (Teleport ships several majors per year). Example: stable/v17.
+teleport_repo_channel: "stable/v17"
+
+# Exact version, used by the 'tarball' method and (optionally) to pin the
+# package version with the 'repository' method. Leave empty/"latest" to take
+# the newest version available in the channel.
+teleport_version: ""
+
+# CPU architecture for the tarball download (amd64 / arm64). Auto-detected.
+teleport_arch: "{{ 'arm64' if ansible_facts['architecture'] == 'aarch64' else 'amd64' }}"
+
+# Computed package name — do not normally override.
+teleport_package_name: "{{ 'teleport-ent' if teleport_edition == 'enterprise' else 'teleport' }}"
+
+# --- System user / group ----------------------------------------------------
+# By default Teleport runs as root (upstream default) because it binds
+# privileged ports and manages host certificates. Set teleport_run_as_root to
+# false and provide a user to run unprivileged.
+teleport_run_as_root: true
+teleport_user: "{{ 'root' if teleport_run_as_root else 'teleport' }}"
+teleport_group: "{{ 'root' if teleport_run_as_root else 'teleport' }}"
+teleport_manage_user: "{{ not teleport_run_as_root }}"
+
+# --- Filesystem paths -------------------------------------------------------
+teleport_data_dir: /var/lib/teleport
+teleport_config_path: /etc/teleport.yaml
+teleport_bin: /usr/local/bin/teleport
+teleport_env_file: /etc/default/teleport
+
+# --- Enterprise license -----------------------------------------------------
+# Provide ONE of the following (vault-encrypt them!):
+#   teleport_license_src     -> path to license.pem on the Ansible controller
+#   teleport_license_content -> raw PEM content (e.g. from a vaulted variable)
+teleport_license_src: ""
+teleport_license_content: ""
+teleport_license_path: "{{ teleport_data_dir }}/license.pem"
+
+# --- Global teleport.yaml settings (shared by auth & proxy) -----------------
+teleport_config_version: v3
+teleport_nodename: "{{ inventory_hostname }}"
+teleport_log_output: stderr
+teleport_log_severity: INFO
+teleport_log_format: text
+# Optional diagnostics/metrics endpoint, e.g. "0.0.0.0:3000".
+teleport_diag_addr: ""
+
+# --- systemd service --------------------------------------------------------
+teleport_service_name: teleport
+teleport_service_enabled: true
+teleport_service_state: started
+teleport_service_manage_unit: true   # write our own hardened unit to /etc/systemd
+teleport_service_limit_nofile: 524288
+# Validate the rendered config with `teleport configtest` before applying.
+teleport_validate_config: true
+
+# --- Environment file (/etc/default/teleport) -------------------------------
+teleport_manage_env_file: false
+teleport_http_proxy: ""
+teleport_https_proxy: ""
+teleport_no_proxy: ""
+teleport_env_extra: {}

@@ -1,0 +1,29 @@
+{{ ansible_managed | comment }}
+[Unit]
+Description=Teleport {{ teleport_edition | capitalize }} Service
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+{% if teleport_manage_env_file | bool %}
+EnvironmentFile=-{{ teleport_env_file }}
+{% endif %}
+{% if not teleport_run_as_root | bool %}
+User={{ teleport_user }}
+Group={{ teleport_group }}
+{% endif %}
+ExecStart={{ teleport_bin }} start --config {{ teleport_config_path }} --pid-file=/run/teleport.pid
+ExecReload=/bin/kill -HUP $MAINPID
+PIDFile=/run/teleport.pid
+LimitNOFILE={{ teleport_service_limit_nofile }}
+Restart=on-failure
+RestartSec=5
+# --- hardening -------------------------------------------------------------
+ProtectHome=true
+PrivateTmp=true
+NoNewPrivileges=true
+ReadWritePaths={{ teleport_data_dir }}
+
+[Install]
+WantedBy=multi-user.target

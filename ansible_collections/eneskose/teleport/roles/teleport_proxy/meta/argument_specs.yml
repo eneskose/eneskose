@@ -1,0 +1,48 @@
+---
+argument_specs:
+  main:
+    short_description: Configure and run the Teleport Proxy Service.
+    options:
+      teleport_auth_server:
+        type: str
+        required: true
+        description: Auth Service API address (host:3025) on the private network.
+      teleport_ca_pin:
+        type: list
+        elements: str
+        default: []
+        description: CA pin(s) verified on join (from `tctl status`).
+      teleport_join_token:
+        type: str
+        default: ""
+        description: Provisioning token used to join the cluster (vault it).
+      teleport_join_method:
+        type: str
+        default: token
+        choices: [token, iam, ec2, kubernetes, gcp, azure]
+        description: Join method.
+      teleport_proxy_public_addr:
+        type: str
+        default: "teleport.example.com:443"
+        description: Public address users reach the proxy on.
+      teleport_proxy_web_listen_addr:
+        type: str
+        default: "0.0.0.0:443"
+        description: Listen address for the web/proxy listener.
+      teleport_proxy_acme_enabled:
+        type: bool
+        default: false
+        description: Obtain TLS certs automatically via Let's Encrypt.
+      teleport_proxy_acme_email:
+        type: str
+        default: ""
+        description: Contact email for ACME (required when ACME is enabled).
+      teleport_proxy_https_keypairs:
+        type: list
+        elements: dict
+        default: []
+        description: Explicit TLS key/cert pairs when ACME is disabled.
+      teleport_proxy_extra_config:
+        type: dict
+        default: {}
+        description: Extra keys merged into proxy_service.

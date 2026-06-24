@@ -1,0 +1,44 @@
+---
+# ===========================================================================
+# teleport_auth — Auth Service configuration.
+# Inherits all base/global variables from teleport_install (data_dir,
+# nodename, logging, paths, license, service management).
+# ===========================================================================
+
+# Cluster name is PERMANENT once set — choose carefully (usually the public
+# DNS name of the cluster, e.g. the proxy's public address without a port).
+teleport_auth_cluster_name: "teleport.example.com"
+
+# Where the Auth Service listens for the internal API. Keep this on a private
+# network — the Auth Service should never be exposed to the internet.
+teleport_auth_listen_addr: "0.0.0.0:3025"
+
+# Optional public/advertised address (host:3025) used when Auth sits behind a
+# load balancer in an HA deployment.
+teleport_auth_public_addr: ""
+
+# Authentication connector settings.
+teleport_auth_authentication_type: local          # local | github | oidc | saml
+teleport_auth_second_factor: "otp"                # otp | webauthn | on | optional
+teleport_auth_webauthn_rp_id: ""                  # required if using webauthn
+
+# Multiplex (TLS routing) lets Proxy serve all protocols on one port (443).
+teleport_auth_proxy_listener_mode: multiplex
+
+# Static provisioning tokens. Convenient for bootstrapping, but SHORT-LIVED
+# dynamic tokens (`tctl tokens add`) or join methods (IAM, kubernetes) are
+# strongly preferred in production. VAULT-ENCRYPT any value you put here.
+# Example: ["proxy,node:{{ vault_teleport_join_token }}"]
+teleport_auth_tokens: []
+
+# Backend storage. Empty {} = default SQLite (dir) backend at data_dir, which
+# is fine for a single Auth instance. For HA, set an external backend, e.g.:
+#   teleport_auth_storage:
+#     type: etcd
+#     peers: ["https://etcd0:2379"]
+#     tls_ca_file: /etc/teleport/etcd-ca.pem
+teleport_auth_storage: {}
+
+# Free-form mapping merged into auth_service for advanced options not modelled
+# above (e.g. session_recording, client_idle_timeout, message_of_the_day).
+teleport_auth_extra_config: {}

@@ -1,0 +1,37 @@
+---
+# Smoke-test scenario. Uses systemd-enabled containers so the role's
+# systemd_service tasks work. Installs the OSS edition to avoid needing an
+# Enterprise license in CI.
+role_name_check: 1
+
+dependency:
+  name: galaxy
+
+driver:
+  name: docker
+
+platforms:
+  - name: teleport-auth
+    image: geerlingguy/docker-ubuntu2204-ansible:latest
+    command: /lib/systemd/systemd
+    privileged: true
+    cgroupns_mode: host
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    pre_build_image: true
+    groups:
+      - teleport_auth
+
+provisioner:
+  name: ansible
+  inventory:
+    group_vars:
+      all:
+        teleport_edition: oss
+        teleport_validate_config: false
+      teleport_auth:
+        teleport_auth_cluster_name: "molecule.test"
+        teleport_auth_second_factor: "otp"
+
+verifier:
+  name: ansible

@@ -1,0 +1,21 @@
+---
+# Variables shared by every Teleport node. Secrets here MUST be vault-encrypted
+# (use `ansible-vault encrypt_string` and reference the variables below).
+
+# Edition & version
+teleport_edition: enterprise
+teleport_install_method: repository
+teleport_repo_channel: "stable/v17"   # review for your target major version
+
+# Enterprise license — provide a vault-encrypted file or content. Example:
+#   teleport_license_src: "files/license.pem"     # encrypt the file with vault
+# or:
+#   teleport_license_content: "{{ vault_teleport_license }}"
+teleport_license_src: ""
+
+# Logging
+teleport_log_severity: INFO
+
+# Example vaulted secret placeholders (define real values in a vault file):
+# vault_teleport_join_token: !vault | ...
+# vault_teleport_license: !vault | ...

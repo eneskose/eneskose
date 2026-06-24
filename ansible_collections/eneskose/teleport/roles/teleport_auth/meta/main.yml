@@ -1,0 +1,23 @@
+---
+galaxy_info:
+  role_name: teleport_auth
+  author: Enes Köse
+  description: >-
+    Configure and run the Teleport Auth Service on a dedicated instance.
+  license: Apache-2.0
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Ubuntu
+      versions: [jammy, noble]
+    - name: Debian
+      versions: [bookworm]
+    - name: EL
+      versions: ["8", "9"]
+  galaxy_tags:
+    - teleport
+    - security
+    - pam
+
+# Pull in the base install role and its handlers.
+dependencies:
+  - role: teleport_install

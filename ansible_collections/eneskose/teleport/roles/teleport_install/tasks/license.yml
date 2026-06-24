@@ -1,0 +1,33 @@
+---
+- name: Assert an Enterprise license source is provided
+  ansible.builtin.assert:
+    that:
+      - (teleport_license_src | length > 0) or (teleport_license_content | length > 0)
+    fail_msg: >-
+      teleport_edition is 'enterprise' but neither teleport_license_src nor
+      teleport_license_content was provided. Supply a (vault-encrypted) license.
+    quiet: true
+
+- name: Install Enterprise license from controller file
+  ansible.builtin.copy:
+    src: "{{ teleport_license_src }}"
+    dest: "{{ teleport_license_path }}"
+    owner: "{{ teleport_user }}"
+    group: "{{ teleport_group }}"
+    mode: "0600"
+  when: teleport_license_src | length > 0
+  no_log: true
+  notify: Restart Teleport
+
+- name: Install Enterprise license from variable content
+  ansible.builtin.copy:
+    content: "{{ teleport_license_content }}"
+    dest: "{{ teleport_license_path }}"
+    owner: "{{ teleport_user }}"
+    group: "{{ teleport_group }}"
+    mode: "0600"
+  when:
+    - teleport_license_src | length == 0
+    - teleport_license_content | length > 0
+  no_log: true
+  notify: Restart Teleport

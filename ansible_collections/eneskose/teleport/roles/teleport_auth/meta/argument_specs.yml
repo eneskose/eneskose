@@ -1,0 +1,49 @@
+---
+argument_specs:
+  main:
+    short_description: Configure and run the Teleport Auth Service.
+    options:
+      teleport_auth_cluster_name:
+        type: str
+        required: true
+        description: Permanent cluster name (cannot be changed after init).
+      teleport_auth_listen_addr:
+        type: str
+        default: "0.0.0.0:3025"
+        description: Address the Auth API listens on (keep private).
+      teleport_auth_public_addr:
+        type: str
+        default: ""
+        description: Advertised address for HA deployments behind a load balancer.
+      teleport_auth_authentication_type:
+        type: str
+        default: local
+        choices: [local, github, oidc, saml]
+        description: Primary authentication connector type.
+      teleport_auth_second_factor:
+        type: str
+        default: otp
+        choices: [otp, webauthn, "on", optional]
+        description: Second-factor policy.
+      teleport_auth_webauthn_rp_id:
+        type: str
+        default: ""
+        description: WebAuthn relying-party ID (required when using webauthn).
+      teleport_auth_proxy_listener_mode:
+        type: str
+        default: multiplex
+        choices: [multiplex, separate]
+        description: TLS routing mode for the cluster.
+      teleport_auth_tokens:
+        type: list
+        elements: str
+        default: []
+        description: Static provisioning tokens (prefer dynamic/IAM joins).
+      teleport_auth_storage:
+        type: dict
+        default: {}
+        description: Backend storage config (empty = default SQLite).
+      teleport_auth_extra_config:
+        type: dict
+        default: {}
+        description: Extra keys merged into auth_service.

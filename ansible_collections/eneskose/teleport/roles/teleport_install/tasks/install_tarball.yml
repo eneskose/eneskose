@@ -1,0 +1,42 @@
+---
+# Installs Teleport from the official CDN tarball. Useful on air-gapped or
+# unsupported distributions, or when an exact version must be pinned.
+- name: Set tarball facts
+  ansible.builtin.set_fact:
+    _teleport_tarball_name: >-
+      {{ ('teleport-ent' if teleport_edition == 'enterprise' else 'teleport')
+      }}-v{{ teleport_version }}-linux-{{ teleport_arch }}-bin.tar.gz
+    _teleport_extract_dir: "{{ ('teleport-ent' if teleport_edition == 'enterprise' else 'teleport') }}"
+
+- name: Create temporary download directory
+  ansible.builtin.tempfile:
+    state: directory
+    suffix: teleport
+  register: _teleport_tmp
+  changed_when: false
+
+- name: Download Teleport tarball
+  ansible.builtin.get_url:
+    url: "https://cdn.teleport.dev/{{ _teleport_tarball_name }}"
+    dest: "{{ _teleport_tmp.path }}/{{ _teleport_tarball_name }}"
+    mode: "0644"
+
+- name: Extract Teleport tarball
+  ansible.builtin.unarchive:
+    src: "{{ _teleport_tmp.path }}/{{ _teleport_tarball_name }}"
+    dest: "{{ _teleport_tmp.path }}"
+    remote_src: true
+
+- name: Run the bundled Teleport installer
+  ansible.builtin.command:
+    cmd: ./install
+    chdir: "{{ _teleport_tmp.path }}/{{ _teleport_extract_dir }}"
+  register: _teleport_install
+  changed_when: "'already' not in _teleport_install.stdout | default('')"
+  notify: Restart Teleport
+
+- name: Remove temporary download directory
+  ansible.builtin.file:
+    path: "{{ _teleport_tmp.path }}"
+    state: absent
+  changed_when: false

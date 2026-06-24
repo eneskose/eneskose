@@ -1,0 +1,3 @@
+---
+# Handlers are inherited from the teleport_install dependency
+# (Restart Teleport / Reload Teleport / Reload systemd).

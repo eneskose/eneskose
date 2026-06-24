@@ -1,0 +1,27 @@
+# Ansible
+*.retry
+*.tar.gz
+.cache/
+.ansible/
+
+# Collection build artifacts
+eneskose-teleport-*.tar.gz
+
+# Molecule
+molecule/*/.molecule/
+.molecule/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Editors
+.idea/
+.vscode/
+*.swp
+
+# Local secrets (never commit unencrypted license/tokens)
+*license.pem
+vault-password.txt

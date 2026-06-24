@@ -1,0 +1,15 @@
+---
+profile: production
+
+exclude_paths:
+  - .cache/
+  - .github/
+  - molecule/
+
+# These templates intentionally render Teleport YAML; skip schema checks on
+# rendered output and allow the documented variable-naming convention.
+skip_list:
+  - var-naming[no-role-prefix]  # shared teleport_* vars are read across roles
+
+warn_list:
+  - experimental

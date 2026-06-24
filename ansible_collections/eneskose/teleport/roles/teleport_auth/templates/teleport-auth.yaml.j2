@@ -1,0 +1,51 @@
+{{ ansible_managed | comment }}
+# Teleport Auth Service configuration — managed by Ansible. Do not edit by hand.
+version: {{ teleport_config_version }}
+
+teleport:
+  nodename: {{ teleport_nodename }}
+  data_dir: {{ teleport_data_dir }}
+  log:
+    output: {{ teleport_log_output }}
+    severity: {{ teleport_log_severity }}
+    format:
+      output: {{ teleport_log_format }}
+{% if teleport_diag_addr | length %}
+  diag_addr: {{ teleport_diag_addr }}
+{% endif %}
+
+auth_service:
+  enabled: "yes"
+  cluster_name: {{ teleport_auth_cluster_name }}
+  listen_addr: {{ teleport_auth_listen_addr }}
+{% if teleport_auth_public_addr | length %}
+  public_addr: {{ teleport_auth_public_addr }}
+{% endif %}
+  proxy_listener_mode: {{ teleport_auth_proxy_listener_mode }}
+{% if teleport_auth_tokens | length %}
+  tokens:
+{% for token in teleport_auth_tokens %}
+    - "{{ token }}"
+{% endfor %}
+{% endif %}
+  authentication:
+    type: {{ teleport_auth_authentication_type }}
+    second_factor: "{{ teleport_auth_second_factor }}"
+{% if teleport_auth_webauthn_rp_id | length and teleport_auth_second_factor in ['webauthn', 'on', 'optional'] %}
+    webauthn:
+      rp_id: {{ teleport_auth_webauthn_rp_id }}
+{% endif %}
+{% if teleport_auth_storage | length %}
+  storage:
+{{ teleport_auth_storage | to_nice_yaml(indent=2) | indent(4, true) }}
+{% endif %}
+{% if teleport_auth_extra_config | length %}
+{{ teleport_auth_extra_config | to_nice_yaml(indent=2) | indent(2, true) }}
+{% endif %}
+
+# This node is dedicated to the Auth Service.
+ssh_service:
+  enabled: "no"
+
+proxy_service:
+  enabled: "no"

@@ -1,0 +1,16 @@
+---
+# Auth Service group variables.
+teleport_auth_cluster_name: "teleport.example.com"
+teleport_auth_listen_addr: "0.0.0.0:3025"
+
+# Recommended: hardware-backed MFA.
+teleport_auth_second_factor: "webauthn"
+teleport_auth_webauthn_rp_id: "teleport.example.com"
+
+# Bootstrap join token for proxies/nodes (vault-encrypt the value!).
+teleport_auth_tokens:
+  - "proxy,node:{{ vault_teleport_join_token }}"
+
+# Single-instance default uses the built-in SQLite backend. For HA, set an
+# external backend here, e.g. etcd / DynamoDB.
+teleport_auth_storage: {}

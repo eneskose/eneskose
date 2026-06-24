@@ -1,0 +1,8 @@
+---
+# Deploy only the Proxy Service (Auth must already be reachable).
+- name: Deploy Teleport Proxy Service
+  hosts: teleport_proxy
+  become: true
+  gather_facts: true
+  roles:
+    - role: eneskose.teleport.teleport_proxy

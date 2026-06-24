@@ -1,0 +1,53 @@
+{{ ansible_managed | comment }}
+# Teleport Proxy Service configuration — managed by Ansible. Do not edit by hand.
+version: {{ teleport_config_version }}
+
+teleport:
+  nodename: {{ teleport_nodename }}
+  data_dir: {{ teleport_data_dir }}
+  auth_server: {{ teleport_auth_server }}
+  log:
+    output: {{ teleport_log_output }}
+    severity: {{ teleport_log_severity }}
+    format:
+      output: {{ teleport_log_format }}
+{% if teleport_diag_addr | length %}
+  diag_addr: {{ teleport_diag_addr }}
+{% endif %}
+{% if teleport_ca_pin | length %}
+  ca_pin:
+{% for pin in teleport_ca_pin %}
+    - "{{ pin }}"
+{% endfor %}
+{% endif %}
+{% if teleport_join_token | length %}
+  join_params:
+    method: {{ teleport_join_method }}
+    token_name: "{{ teleport_join_token }}"
+{% endif %}
+
+# This node is dedicated to the Proxy Service.
+auth_service:
+  enabled: "no"
+
+ssh_service:
+  enabled: "no"
+
+proxy_service:
+  enabled: "yes"
+  public_addr: {{ teleport_proxy_public_addr }}
+  web_listen_addr: {{ teleport_proxy_web_listen_addr }}
+{% if teleport_proxy_acme_enabled | bool %}
+  acme:
+    enabled: "yes"
+    email: {{ teleport_proxy_acme_email }}
+{% elif teleport_proxy_https_keypairs | length %}
+  https_keypairs:
+{% for kp in teleport_proxy_https_keypairs %}
+    - key_file: {{ kp.key_file }}
+      cert_file: {{ kp.cert_file }}
+{% endfor %}
+{% endif %}
+{% if teleport_proxy_extra_config | length %}
+{{ teleport_proxy_extra_config | to_nice_yaml(indent=2) | indent(2, true) }}
+{% endif %}

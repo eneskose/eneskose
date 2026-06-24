@@ -1,0 +1,39 @@
+---
+# ===========================================================================
+# teleport_proxy — Proxy Service configuration.
+# Inherits base/global variables from teleport_install.
+# The Proxy is the ONLY component that should be reachable from the internet.
+# ===========================================================================
+
+# --- Cluster join (how the Proxy connects to the Auth Service) --------------
+# Address of the Auth Service API (host:3025), reachable on the private network.
+# In an HA setup this is typically a load balancer in front of the Auth nodes.
+teleport_auth_server: "auth.example.com:3025"
+
+# CA pin(s) the Proxy verifies when joining — obtained on the Auth host with
+# `tctl status`. Strongly recommended to prevent man-in-the-middle on join.
+teleport_ca_pin: []
+
+# Join token (vault-encrypt). Obtain with `tctl tokens add --type=proxy`.
+teleport_join_token: ""
+teleport_join_method: token        # token | iam | ec2 | kubernetes | ...
+
+# --- Public addressing ------------------------------------------------------
+# Public address users/clients reach (host:port). With TLS routing this is the
+# single 443 entrypoint for web UI, SSH, Kube, DB, etc.
+teleport_proxy_public_addr: "teleport.example.com:443"
+teleport_proxy_web_listen_addr: "0.0.0.0:443"
+
+# --- TLS for the web/proxy listener -----------------------------------------
+# Option A: ACME (Let's Encrypt). Requires the proxy to be reachable on 443
+# from the internet and a valid public DNS name in teleport_proxy_public_addr.
+teleport_proxy_acme_enabled: false
+teleport_proxy_acme_email: ""
+
+# Option B: bring your own certificate(s). Each item: {key_file, cert_file}.
+# Used only when ACME is disabled.
+teleport_proxy_https_keypairs: []
+
+# Free-form mapping merged into proxy_service for advanced options
+# (e.g. kube_listen_addr, postgres_public_addr, mysql_public_addr).
+teleport_proxy_extra_config: {}

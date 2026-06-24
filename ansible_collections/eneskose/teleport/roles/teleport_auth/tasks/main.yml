@@ -1,0 +1,29 @@
+---
+- name: Validate Auth Service variables
+  ansible.builtin.assert:
+    that:
+      - teleport_auth_cluster_name | length > 0
+      - teleport_auth_listen_addr | length > 0
+      - (teleport_auth_second_factor != 'webauthn') or (teleport_auth_webauthn_rp_id | length > 0)
+    fail_msg: >-
+      Auth Service requires teleport_auth_cluster_name and
+      teleport_auth_listen_addr; webauthn additionally requires
+      teleport_auth_webauthn_rp_id.
+    quiet: true
+
+- name: Render Auth Service configuration
+  ansible.builtin.template:
+    src: teleport-auth.yaml.j2
+    dest: "{{ teleport_config_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+    validate: "{{ (teleport_bin ~ ' configtest %s') if (teleport_validate_config | bool) else omit }}"
+  notify: Restart Teleport
+
+- name: Ensure Teleport Auth Service is enabled and running
+  ansible.builtin.systemd_service:
+    name: "{{ teleport_service_name }}"
+    enabled: "{{ teleport_service_enabled }}"
+    state: "{{ teleport_service_state }}"
+    daemon_reload: true

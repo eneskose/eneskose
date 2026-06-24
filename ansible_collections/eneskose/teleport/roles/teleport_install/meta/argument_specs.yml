@@ -1,0 +1,49 @@
+---
+argument_specs:
+  main:
+    short_description: Install Teleport and provision the common base layer.
+    options:
+      teleport_edition:
+        type: str
+        choices: [enterprise, oss]
+        default: enterprise
+        description: Which Teleport edition/package to install.
+      teleport_install_method:
+        type: str
+        choices: [repository, tarball]
+        default: repository
+        description: Install from OS package repositories or the CDN tarball.
+      teleport_repo_channel:
+        type: str
+        default: "stable/v17"
+        description: Package repository release channel (review per major version).
+      teleport_version:
+        type: str
+        default: ""
+        description: >-
+          Explicit version. Required for the tarball method; optional pin for
+          the repository method. Empty/"latest" installs the newest available.
+      teleport_run_as_root:
+        type: bool
+        default: true
+        description: Run the teleport process as root (upstream default).
+      teleport_data_dir:
+        type: str
+        default: /var/lib/teleport
+        description: Teleport data directory (and SQLite backend location).
+      teleport_config_path:
+        type: str
+        default: /etc/teleport.yaml
+        description: Path to the rendered teleport.yaml.
+      teleport_license_src:
+        type: str
+        default: ""
+        description: Path on the controller to the Enterprise license.pem.
+      teleport_license_content:
+        type: str
+        default: ""
+        description: Raw Enterprise license PEM content (alternative to _src).
+      teleport_validate_config:
+        type: bool
+        default: true
+        description: Validate rendered config with `teleport configtest`.

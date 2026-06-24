@@ -1,0 +1,76 @@
+---
+- name: Validate edition selection
+  ansible.builtin.assert:
+    that:
+      - teleport_edition in ['enterprise', 'oss']
+    fail_msg: "teleport_edition must be 'enterprise' or 'oss' (got '{{ teleport_edition }}')."
+    quiet: true
+
+- name: Validate install method
+  ansible.builtin.assert:
+    that:
+      - teleport_install_method in ['repository', 'tarball']
+    fail_msg: "teleport_install_method must be 'repository' or 'tarball'."
+    quiet: true
+
+- name: Require a version for the tarball install method
+  ansible.builtin.assert:
+    that:
+      - teleport_version | length > 0
+      - teleport_version != 'latest'
+    fail_msg: "teleport_version must be set to an explicit version for the tarball method."
+    quiet: true
+  when: teleport_install_method == 'tarball'
+
+- name: Ensure Teleport system group
+  ansible.builtin.group:
+    name: "{{ teleport_group }}"
+    system: true
+  when: teleport_manage_user | bool
+
+- name: Ensure Teleport system user
+  ansible.builtin.user:
+    name: "{{ teleport_user }}"
+    group: "{{ teleport_group }}"
+    system: true
+    shell: /usr/sbin/nologin
+    home: "{{ teleport_data_dir }}"
+    create_home: false
+  when: teleport_manage_user | bool
+
+- name: Install Teleport ({{ teleport_install_method }})
+  ansible.builtin.include_tasks: "install_{{ teleport_install_method }}.yml"
+
+- name: Ensure Teleport data directory
+  ansible.builtin.file:
+    path: "{{ teleport_data_dir }}"
+    state: directory
+    owner: "{{ teleport_user }}"
+    group: "{{ teleport_group }}"
+    mode: "0700"
+
+- name: Install Teleport Enterprise license
+  ansible.builtin.include_tasks: license.yml
+  when: teleport_edition == 'enterprise'
+
+- name: Manage Teleport environment file
+  ansible.builtin.template:
+    src: teleport.env.j2
+    dest: "{{ teleport_env_file }}"
+    owner: root
+    group: root
+    mode: "0640"
+  when: teleport_manage_env_file | bool
+  notify: Restart Teleport
+
+- name: Manage hardened systemd unit
+  ansible.builtin.template:
+    src: teleport.service.j2
+    dest: "/etc/systemd/system/{{ teleport_service_name }}.service"
+    owner: root
+    group: root
+    mode: "0644"
+  when: teleport_service_manage_unit | bool
+  notify:
+    - Reload systemd
+    - Restart Teleport

@@ -1,0 +1,8 @@
+---
+# Deploy only the Auth Service.
+- name: Deploy Teleport Auth Service
+  hosts: teleport_auth
+  become: true
+  gather_facts: true
+  roles:
+    - role: eneskose.teleport.teleport_auth

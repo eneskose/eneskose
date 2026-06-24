@@ -1,0 +1,37 @@
+---
+- name: Validate Proxy Service variables
+  ansible.builtin.assert:
+    that:
+      - teleport_auth_server | length > 0
+      - teleport_proxy_public_addr | length > 0
+      - teleport_proxy_web_listen_addr | length > 0
+      - (not teleport_proxy_acme_enabled | bool) or (teleport_proxy_acme_email | length > 0)
+    fail_msg: >-
+      Proxy requires teleport_auth_server, teleport_proxy_public_addr and
+      teleport_proxy_web_listen_addr; when ACME is enabled an email is required.
+    quiet: true
+
+- name: Warn when joining without a CA pin
+  ansible.builtin.debug:
+    msg: >-
+      WARNING: teleport_ca_pin is empty. Joining without CA pinning is
+      vulnerable to man-in-the-middle attacks. Set it from `tctl status`.
+  when: teleport_ca_pin | length == 0
+
+- name: Render Proxy Service configuration
+  ansible.builtin.template:
+    src: teleport-proxy.yaml.j2
+    dest: "{{ teleport_config_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+    validate: "{{ (teleport_bin ~ ' configtest %s') if (teleport_validate_config | bool) else omit }}"
+  no_log: "{{ teleport_join_token | length > 0 }}"
+  notify: Restart Teleport
+
+- name: Ensure Teleport Proxy Service is enabled and running
+  ansible.builtin.systemd_service:
+    name: "{{ teleport_service_name }}"
+    enabled: "{{ teleport_service_enabled }}"
+    state: "{{ teleport_service_state }}"
+    daemon_reload: true

@@ -1,0 +1,75 @@
+---
+# --- Debian / Ubuntu --------------------------------------------------------
+- name: Configure Teleport repository (Debian family)
+  when: ansible_facts['os_family'] == 'Debian'
+  block:
+    - name: Install apt prerequisites
+      ansible.builtin.apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - gnupg
+        state: present
+        update_cache: true
+
+    - name: Ensure apt keyrings directory exists
+      ansible.builtin.file:
+        path: /usr/share/keyrings
+        state: directory
+        mode: "0755"
+
+    - name: Add Teleport apt signing key
+      ansible.builtin.get_url:
+        url: https://apt.releases.teleport.dev/gpg
+        dest: /usr/share/keyrings/teleport-archive-keyring.asc
+        mode: "0644"
+
+    - name: Add Teleport apt repository
+      ansible.builtin.apt_repository:
+        repo: >-
+          deb [signed-by=/usr/share/keyrings/teleport-archive-keyring.asc]
+          https://apt.releases.teleport.dev/{{ ansible_facts['distribution'] | lower }}
+          {{ ansible_facts['distribution_release'] }} {{ teleport_repo_channel }}
+        filename: teleport
+        state: present
+        update_cache: true
+
+    - name: Install Teleport package (Debian family)
+      ansible.builtin.apt:
+        name: "{{ teleport_package_name }}{{ ('=' + teleport_version) if (teleport_version | length and teleport_version != 'latest') else '' }}"
+        state: "{{ 'present' if (teleport_version | length and teleport_version != 'latest') else 'latest' }}"
+        update_cache: true
+      notify: Restart Teleport
+
+# --- RHEL / CentOS / Rocky / Amazon Linux -----------------------------------
+- name: Configure Teleport repository (RedHat family)
+  when: ansible_facts['os_family'] == 'RedHat'
+  block:
+    - name: Set RPM repository facts
+      ansible.builtin.set_fact:
+        _teleport_rpm_distro: "{{ 'amzn' if ansible_facts['distribution'] == 'Amazon' else 'rhel' }}"
+        _teleport_rpm_relver: "{{ ansible_facts['distribution_major_version'] }}"
+
+    - name: Add Teleport yum repository
+      ansible.builtin.yum_repository:
+        name: teleport
+        description: Teleport
+        baseurl: >-
+          https://yum.releases.teleport.dev/{{ _teleport_rpm_distro }}/{{ _teleport_rpm_relver }}/Teleport/$basearch/{{ teleport_repo_channel }}/
+        gpgkey: https://yum.releases.teleport.dev/gpg
+        gpgcheck: true
+        repo_gpgcheck: true
+        enabled: true
+
+    - name: Install Teleport package (RedHat family)
+      ansible.builtin.dnf:
+        name: "{{ teleport_package_name }}{{ ('-' + teleport_version) if (teleport_version | length and teleport_version != 'latest') else '' }}"
+        state: "{{ 'present' if (teleport_version | length and teleport_version != 'latest') else 'latest' }}"
+      notify: Restart Teleport
+
+- name: Fail on unsupported OS family for repository install
+  ansible.builtin.fail:
+    msg: >-
+      Unsupported OS family '{{ ansible_facts['os_family'] }}' for the
+      repository install method. Use teleport_install_method: tarball instead.
+  when: ansible_facts['os_family'] not in ['Debian', 'RedHat']

@@ -1,0 +1,6 @@
+---
+# Collection runtime dependencies (none required today — only ansible.builtin
+# modules are used). Listed for forward-compatibility / optional features.
+collections: []
+
+roles: []

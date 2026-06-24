@@ -1,0 +1,16 @@
+---
+# Handlers live in the base role so the service roles (which depend on
+# teleport_install) can notify them by name.
+- name: Reload systemd
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+
+- name: Restart Teleport
+  ansible.builtin.systemd_service:
+    name: "{{ teleport_service_name }}"
+    state: restarted
+
+- name: Reload Teleport
+  ansible.builtin.systemd_service:
+    name: "{{ teleport_service_name }}"
+    state: reloaded

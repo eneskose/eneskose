@@ -1,0 +1,9 @@
+# System (OS) packages installed into the execution environment via bindep.
+# Format: <package> [platform/profile markers]
+# See https://docs.openstack.org/infra/bindep/
+
+# OpenSSH client — required for the EE to connect to managed nodes.
+openssh-clients [platform:rpm]
+
+# Uncomment if you connect with password auth (ansible_password / --ask-pass):
+# sshpass [platform:rpm]

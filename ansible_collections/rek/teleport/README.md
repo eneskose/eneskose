@@ -39,6 +39,10 @@ ansible-galaxy collection build ansible_collections/rek/teleport
 ansible-galaxy collection install rek-teleport-1.0.0.tar.gz
 ```
 
+To run the roles inside a container with `ansible-navigator` or Ansible
+Automation Platform / Automation Controller, use the bundled execution
+environment under [`execution-environment/`](../../../execution-environment/).
+
 ## Quick start
 
 1. Edit the sample inventory and group vars under

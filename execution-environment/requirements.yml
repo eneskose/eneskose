@@ -1,0 +1,24 @@
+---
+# Collections installed into the execution environment at build time.
+#
+# Default: bundle rek.teleport from the locally built tarball that build.sh
+# (or the additional_build_files step) drops into the build context at src/.
+collections:
+  - name: src/rek-teleport-1.0.0.tar.gz
+    type: file
+
+# --- Alternatives -----------------------------------------------------------
+# Install directly from this Git repository (subdirectory collection). Useful
+# for AAP/Automation Controller, which builds EEs from source control. Replace
+# the local-tarball entry above with:
+#
+#   collections:
+#     - name: git+https://github.com/eneskose/eneskose.git#ansible_collections/rek/teleport
+#       type: git
+#       version: master          # or a release tag / branch
+#
+# Or, once published to Galaxy / Automation Hub:
+#
+#   collections:
+#     - name: rek.teleport
+#       version: ">=1.0.0,<2.0.0"

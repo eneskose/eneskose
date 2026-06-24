@@ -1,0 +1,36 @@
+---
+# ansible-builder execution environment definition (schema v3).
+# Build with:  ansible-builder build -f execution-environment.yml -t rek/teleport-ee:1.0.0
+# or use the bundled ./build.sh helper (which also rebuilds the collection tarball).
+#
+# Docs: https://ansible.readthedocs.io/projects/builder/en/latest/
+
+version: 3
+
+images:
+  base_image:
+    # Community EE base — ships ansible-core, ansible-runner, Python and dnf.
+    # For a Red Hat supported AAP/Automation Controller image, swap this for:
+    #   registry.redhat.io/ansible-automation-platform-25/ee-minimal-rhel9:latest
+    # (requires `podman login registry.redhat.io`).
+    name: quay.io/ansible/awx-ee:latest
+
+dependencies:
+  # Collections baked into the image (bundles rek.teleport from the local tarball).
+  galaxy: requirements.yml
+  # Extra Python libraries (none needed today — kept for forward compatibility).
+  python: requirements.txt
+  # OS packages installed into the image (e.g. the SSH client for connections).
+  system: bindep.txt
+
+# Copy the locally built collection tarball into the build context so the EE
+# bundles exactly this repository's source. ./build.sh regenerates it.
+additional_build_files:
+  - src: rek-teleport-1.0.0.tar.gz
+    dest: src
+
+additional_build_steps:
+  append_final:
+    - LABEL org.opencontainers.image.title="rek-teleport-ee"
+    - LABEL org.opencontainers.image.description="Execution environment for the rek.teleport Ansible collection (Teleport on RHEL)."
+    - LABEL org.opencontainers.image.source="https://github.com/eneskose/eneskose"

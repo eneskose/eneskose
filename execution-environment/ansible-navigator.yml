@@ -1,0 +1,28 @@
+---
+# ansible-navigator configuration for running the rek.teleport roles inside the
+# execution environment. Run navigator from this directory (or pass
+# --pp/-eei flags) so it picks these settings up.
+#
+# Example:
+#   ansible-navigator run ../ansible_collections/rek/teleport/playbooks/site.yml \
+#     -i ../ansible_collections/rek/teleport/playbooks/inventory/hosts.yml
+#
+# Docs: https://ansible.readthedocs.io/projects/navigator/settings/
+ansible-navigator:
+  execution-environment:
+    enabled: true
+    image: rek/teleport-ee:1.0.0
+    pull:
+      # 'missing' pulls only when the image is absent locally; use 'never' for
+      # an image you build locally, or 'always' to track a remote tag.
+      policy: missing
+    # Forward your SSH agent so connections to managed nodes work from the EE.
+    environment-variables:
+      pass:
+        - SSH_AUTH_SOCK
+  # 'stdout' mirrors classic ansible-playbook output; drop it to use the TUI.
+  mode: stdout
+  playbook-artifact:
+    enable: false
+  logging:
+    level: warning

@@ -1,0 +1,8 @@
+# Python dependencies installed into the execution environment.
+#
+# The rek.teleport roles use only ansible.builtin modules (dnf, yum_repository,
+# get_url, unarchive, systemd, user, file, template, copy), so no extra Python
+# libraries are required beyond what the base image already provides.
+#
+# Add any future requirements here, e.g.:
+#   jmespath        # for the json_query filter

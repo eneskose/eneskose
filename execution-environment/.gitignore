@@ -1,0 +1,4 @@
+# Build artifacts produced by build.sh / ansible-builder — regenerated, not committed.
+context/
+rek-teleport-*.tar.gz
+ansible-navigator.log

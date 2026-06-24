@@ -1,6 +1,0 @@
----
-- name: Converge
-  hosts: teleport_auth
-  become: true
-  roles:
-    - role: eneskose.teleport.teleport_auth

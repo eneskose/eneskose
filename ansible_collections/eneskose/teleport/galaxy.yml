@@ -28,9 +28,8 @@ documentation: https://github.com/eneskose/eneskose/tree/master/ansible_collecti
 homepage: https://github.com/eneskose/eneskose
 issues: https://github.com/eneskose/eneskose/issues
 build_ignore:
-  - .github
   - .gitignore
-  - molecule
+  - .ansible
   - tests
   - "*.tar.gz"
   - "*.retry"

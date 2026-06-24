@@ -7,10 +7,6 @@
 # Collection build artifacts
 eneskose-teleport-*.tar.gz
 
-# Molecule
-molecule/*/.molecule/
-.molecule/
-
 # Python
 __pycache__/
 *.pyc

@@ -20,4 +20,4 @@ rules:
 ignore: |
   *.tar.gz
   .cache/
-  molecule/*/.molecule/
+  .ansible/

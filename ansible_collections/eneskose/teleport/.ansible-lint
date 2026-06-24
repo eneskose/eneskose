@@ -3,8 +3,7 @@ profile: production
 
 exclude_paths:
   - .cache/
-  - .github/
-  - molecule/
+  - .ansible/
 
 # These templates intentionally render Teleport YAML; skip schema checks on
 # rendered output and allow the documented variable-naming convention.

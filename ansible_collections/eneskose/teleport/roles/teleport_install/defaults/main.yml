@@ -11,7 +11,7 @@
 # 'oss' installs the community `teleport` package.
 teleport_edition: enterprise
 
-# How to install: 'repository' (apt/yum) or 'tarball' (download from CDN).
+# How to install: 'repository' (yum, RHEL family) or 'tarball' (CDN download).
 teleport_install_method: repository
 
 # Release channel for the package repositories. REVIEW THIS for your target
@@ -42,7 +42,7 @@ teleport_manage_user: "{{ not teleport_run_as_root }}"
 teleport_data_dir: /var/lib/teleport
 teleport_config_path: /etc/teleport.yaml
 teleport_bin: /usr/local/bin/teleport
-teleport_env_file: /etc/default/teleport
+teleport_env_file: /etc/sysconfig/teleport
 
 # --- Enterprise license -----------------------------------------------------
 # Provide ONE of the following (vault-encrypt them!):
@@ -70,7 +70,7 @@ teleport_service_limit_nofile: 524288
 # Validate the rendered config with `teleport configtest` before applying.
 teleport_validate_config: true
 
-# --- Environment file (/etc/default/teleport) -------------------------------
+# --- Environment file (/etc/sysconfig/teleport) -----------------------------
 teleport_manage_env_file: false
 teleport_http_proxy: ""
 teleport_https_proxy: ""

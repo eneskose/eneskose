@@ -23,7 +23,9 @@ Auth↔Proxy join flow, and the network-port reference.
 ## Requirements
 
 - Ansible `>=2.15` (`ansible-core`) on the controller.
-- Target VMs: Ubuntu/Debian or RHEL-family (EL 8/9). `become: true`.
+- Target VMs: **RHEL family** — RHEL / CentOS / Rocky / Alma / Amazon Linux
+  (EL 8/9). `become: true`. (Other distros can use
+  `teleport_install_method: tarball`.)
 - A Teleport **Enterprise license** (`license.pem`) for the default edition.
 
 ## Install
@@ -96,16 +98,16 @@ ansible-galaxy collection install eneskose-teleport-1.0.0.tar.gz
 - Review `teleport_repo_channel` to match the Teleport major version you intend
   to run.
 
-## Development & testing
+## Development & linting
 
 ```bash
 yamllint .
-ansible-lint
-molecule test            # requires Docker; installs OSS edition for the smoke test
+ansible-lint                 # passes the 'production' profile
+ansible-galaxy collection build
 ```
 
-CI (lint, syntax-check, collection build) runs via
-[`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+Lint configuration lives in [`.yamllint`](.yamllint) and
+[`.ansible-lint`](.ansible-lint).
 
 ## License
 

@@ -19,4 +19,10 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   TLS via ACME or supplied key pairs.
 - Sample inventory, `group_vars`, and `site.yml` / `auth.yml` / `proxy.yml`
   playbooks.
-- Molecule scenario and GitHub Actions lint/build CI.
+- yamllint and ansible-lint (production profile) configuration.
+
+### Notes
+
+- Targets the RHEL OS family (EL 8/9) via the yum repository; other
+  distributions can install via `teleport_install_method: tarball`.
+- Single Auth instance uses the built-in SQLite backend by default.

@@ -18,7 +18,7 @@
     owner: root
     group: root
     mode: "0644"
-    validate: "{{ (teleport_bin ~ ' configtest %s') if (teleport_validate_config | bool) else omit }}"
+    validate: "{{ (teleport_bin ~ ' configure --test %s') if (teleport_validate_config | bool) else omit }}"
   notify: Restart Teleport
 
 - name: Ensure Teleport Auth Service is enabled and running

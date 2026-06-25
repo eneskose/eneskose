@@ -46,4 +46,4 @@ argument_specs:
       teleport_validate_config:
         type: bool
         default: true
-        description: Validate rendered config with `teleport configtest`.
+        description: Validate rendered config with `teleport configure --test`.

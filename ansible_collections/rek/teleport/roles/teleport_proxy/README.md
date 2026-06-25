@@ -20,7 +20,7 @@ Depends on `teleport_install`, which runs automatically.
    one from OpenBao/Vault PKI (see below).
 4. Renders `/etc/teleport.yaml` with `proxy_service` enabled (and `auth`/`ssh`
    disabled) plus the cluster-join settings — validated with
-   `teleport configtest`.
+   `teleport configure --test`.
 5. Enables and starts the `teleport` systemd service.
 
 ## TLS certificate

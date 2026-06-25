@@ -37,7 +37,7 @@
     owner: root
     group: root
     mode: "0644"
-    validate: "{{ (teleport_bin ~ ' configtest %s') if (teleport_validate_config | bool) else omit }}"
+    validate: "{{ (teleport_bin ~ ' configure --test %s') if (teleport_validate_config | bool) else omit }}"
   no_log: "{{ teleport_join_token | length > 0 }}"
   notify: Restart Teleport
 

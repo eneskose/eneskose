@@ -41,6 +41,7 @@ teleport_manage_user: "{{ not teleport_run_as_root }}"
 # --- Filesystem paths -------------------------------------------------------
 teleport_data_dir: /var/lib/teleport
 teleport_config_path: /etc/teleport.yaml
+# Both the RPM and the tarball installer place the binary in /usr/local/bin.
 teleport_bin: /usr/local/bin/teleport
 teleport_env_file: /etc/sysconfig/teleport
 
@@ -67,7 +68,7 @@ teleport_service_enabled: true
 teleport_service_state: started
 teleport_service_manage_unit: true   # write our own hardened unit to /etc/systemd
 teleport_service_limit_nofile: 524288
-# Validate the rendered config with `teleport configtest` before applying.
+# Validate the rendered config with `teleport configure --test` before applying.
 teleport_validate_config: true
 
 # --- Environment file (/etc/sysconfig/teleport) -----------------------------

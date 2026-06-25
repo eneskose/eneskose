@@ -11,7 +11,7 @@ handlers), which runs automatically.
 
 1. Validates the Auth-specific variables.
 2. Renders `/etc/teleport.yaml` with `auth_service` enabled (and `proxy`/`ssh`
-   disabled) — validated with `teleport configtest` before being applied.
+   disabled) — validated with `teleport configure --test` before being applied.
 3. Enables and starts the `teleport` systemd service.
 
 ## Key variables

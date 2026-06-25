@@ -34,7 +34,7 @@ place:
   render `teleport.yaml` or start the daemon.
 - **`teleport_auth`** and **`teleport_proxy`** each `depends on`
   `teleport_install` (via `meta/main.yml`), render their node's complete
-  `teleport.yaml`, validate it with `teleport configtest`, and start the
+  `teleport.yaml`, validate it with `teleport configure --test`, and start the
   service — notifying the inherited restart handler on change.
 
 This keeps install logic DRY and the two service roles independently usable and

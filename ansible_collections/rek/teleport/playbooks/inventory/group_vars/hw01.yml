@@ -17,8 +17,12 @@ teleport_proxy_acme_email: "ops@example.com"
 # --- Bastion / jump host ----------------------------------------------------
 # These hosts are not reachable directly; SSH is proxied through a jump host.
 # ProxyJump tunnels the connection end-to-end — your key/agent authenticates
-# from the controller and is never copied onto the bastion. See docs/bastion.md.
+# from the controller and is never copied onto the bastion. CheckHostIP=no
+# avoids known_hosts collisions when environments reuse the same target IPs.
+# Set teleport_use_bastion=false (e.g. in AAP/Controller, which has direct
+# routing) to connect without the jump host. See docs/bastion.md.
 teleport_bastion: "bastion@jump.hw01.example.com"
+teleport_use_bastion: true
 ansible_ssh_common_args: >-
-  -o ProxyJump={{ teleport_bastion }}
-  -o StrictHostKeyChecking=accept-new
+  {{ ('-o ProxyJump=' ~ teleport_bastion ~ ' -o CheckHostIP=no -o StrictHostKeyChecking=accept-new')
+     if (teleport_use_bastion | bool) else '' }}

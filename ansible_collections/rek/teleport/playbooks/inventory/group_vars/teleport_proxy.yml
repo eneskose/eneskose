@@ -1,12 +1,14 @@
 ---
 # Proxy Service group variables — environment-independent defaults.
-# Environment-specific values (auth server, CA pin, public address, ACME email)
-# live in the per-environment group_vars: example.yml / hw01.yml / dev02.yml.
+# Environment-specific values (auth server, public address) live in the
+# per-environment group_vars: example.yml / hw01.yml / dev02.yml.
 
 # Join token + CA pin are auto-bootstrapped from the Auth host at run time
 # (teleport_proxy_autojoin, default true) — nothing to set here. Provide
 # teleport_join_token / teleport_ca_pin explicitly only to opt out.
 
-# TLS via ACME/Let's Encrypt (set false to use teleport_proxy_https_keypairs).
 teleport_proxy_web_listen_addr: "0.0.0.0:443"
-teleport_proxy_acme_enabled: true
+
+# TLS: supply certs via teleport_proxy_https_keypairs, or set
+# teleport_proxy_tls_provider: openbao to issue them from OpenBao PKI.
+teleport_proxy_tls_provider: keypairs

@@ -6,6 +6,8 @@
 collections:
   - name: src/rek-teleport-1.0.0.tar.gz
     type: file
+  # Needed for the teleport_proxy 'openbao' TLS provider (OpenBao/Vault PKI).
+  - name: community.hashi_vault
 
 # --- Alternatives -----------------------------------------------------------
 # Install directly from this Git repository (subdirectory collection). Useful

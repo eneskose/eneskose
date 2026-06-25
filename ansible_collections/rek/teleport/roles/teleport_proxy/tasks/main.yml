@@ -5,10 +5,11 @@
       - teleport_auth_server | length > 0
       - teleport_proxy_public_addr | length > 0
       - teleport_proxy_web_listen_addr | length > 0
-      - (not teleport_proxy_acme_enabled | bool) or (teleport_proxy_acme_email | length > 0)
+      - teleport_proxy_tls_provider in ['keypairs', 'openbao']
     fail_msg: >-
       Proxy requires teleport_auth_server, teleport_proxy_public_addr and
-      teleport_proxy_web_listen_addr; when ACME is enabled an email is required.
+      teleport_proxy_web_listen_addr; teleport_proxy_tls_provider must be
+      'keypairs' or 'openbao'.
     quiet: true
 
 - name: Auto-discover CA pin and mint join token from the Auth host
@@ -24,6 +25,10 @@
       vulnerable to man-in-the-middle attacks. Set it, or enable
       teleport_proxy_autojoin to discover it from the Auth host.
   when: teleport_ca_pin | length == 0
+
+- name: Obtain TLS certificate from OpenBao PKI
+  ansible.builtin.include_tasks: tls_openbao.yml
+  when: teleport_proxy_tls_provider == 'openbao'
 
 - name: Render Proxy Service configuration
   ansible.builtin.template:

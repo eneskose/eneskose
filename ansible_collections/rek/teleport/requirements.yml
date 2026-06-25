@@ -1,6 +1,13 @@
 ---
-# Collection runtime dependencies (none required today — only ansible.builtin
-# modules are used). Listed for forward-compatibility / optional features.
+# Collection runtime dependencies.
+#
+# OPTIONAL: the teleport_proxy 'openbao' TLS provider needs community.hashi_vault
+# (and the `hvac` Python library on the Proxy host). It is intentionally left
+# commented so it isn't force-installed for users who don't use that provider —
+# install it explicitly when you do:
+#   ansible-galaxy collection install community.hashi_vault
+# collections:
+#   - name: community.hashi_vault
 collections: []
 
 roles: []

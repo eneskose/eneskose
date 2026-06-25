@@ -1,0 +1,99 @@
+---
+# Issue the Proxy's serving certificate from OpenBao (Vault-compatible) PKI.
+# Runs on the Proxy host: OpenBao generates the private key and it is written
+# only here, never on the controller. Idempotent — re-issues only when the
+# certificate is missing or within teleport_proxy_openbao_renew_threshold_days
+# of expiry.
+
+- name: Validate OpenBao PKI settings
+  ansible.builtin.assert:
+    that:
+      - teleport_proxy_openbao_url | length > 0
+      - teleport_proxy_openbao_pki_role | length > 0
+      - teleport_proxy_openbao_cert_common_name | length > 0
+    fail_msg: >-
+      teleport_proxy_tls_provider is 'openbao' but teleport_proxy_openbao_url,
+      teleport_proxy_openbao_pki_role and a common name are required.
+    quiet: true
+
+- name: Ensure pip is available on the Proxy
+  ansible.builtin.dnf:
+    name: python3-pip
+    state: present
+
+- name: Ensure the hvac library is installed on the Proxy
+  ansible.builtin.pip:
+    name: hvac
+    state: present
+
+- name: Check for an existing Proxy certificate
+  ansible.builtin.stat:
+    path: "{{ teleport_proxy_tls_cert_file }}"
+  register: _tp_cert_stat
+
+- name: Check whether the existing certificate is still valid
+  ansible.builtin.command: >-
+    openssl x509 -checkend {{ (teleport_proxy_openbao_renew_threshold_days | int) * 86400 }}
+    -noout -in {{ teleport_proxy_tls_cert_file }}
+  register: _tp_cert_checkend
+  failed_when: false
+  changed_when: false
+  check_mode: false
+  when: _tp_cert_stat.stat.exists
+
+- name: Decide whether to (re)issue the certificate
+  ansible.builtin.set_fact:
+    _tp_need_issue: "{{ (not _tp_cert_stat.stat.exists) or ((_tp_cert_checkend.rc | default(1)) != 0) }}"
+
+- name: Issue the Proxy certificate from OpenBao PKI
+  community.hashi_vault.vault_pki_generate_certificate:
+    url: "{{ teleport_proxy_openbao_url }}"
+    token: "{{ teleport_proxy_openbao_token or omit }}"
+    auth_method: token
+    ca_cert: "{{ teleport_proxy_openbao_ca_cert or omit }}"
+    namespace: "{{ teleport_proxy_openbao_namespace or omit }}"
+    engine_mount_point: "{{ teleport_proxy_openbao_pki_mount }}"
+    role_name: "{{ teleport_proxy_openbao_pki_role }}"
+    common_name: "{{ teleport_proxy_openbao_cert_common_name }}"
+    alt_names: "{{ teleport_proxy_openbao_cert_alt_names }}"
+    ip_sans: "{{ teleport_proxy_openbao_cert_ip_sans }}"
+    ttl: "{{ teleport_proxy_openbao_cert_ttl }}"
+  register: _tp_bao
+  no_log: true
+  when: _tp_need_issue | bool
+
+- name: Ensure the TLS directory exists
+  ansible.builtin.file:
+    path: "{{ teleport_proxy_tls_dir }}"
+    state: directory
+    owner: "{{ teleport_user }}"
+    group: "{{ teleport_group }}"
+    mode: "0750"
+  when: _tp_need_issue | bool
+
+- name: Write the Proxy private key
+  ansible.builtin.copy:
+    content: "{{ _tp_bao.data.private_key }}\n"
+    dest: "{{ teleport_proxy_tls_key_file }}"
+    owner: "{{ teleport_user }}"
+    group: "{{ teleport_group }}"
+    mode: "0600"
+  no_log: true
+  when: _tp_need_issue | bool
+  notify: Restart Teleport
+
+- name: Write the Proxy certificate (leaf + chain)
+  ansible.builtin.copy:
+    content: "{{ _tp_bao.data.certificate }}\n{{ (_tp_bao.data.ca_chain | default([])) | join('\n') }}\n"
+    dest: "{{ teleport_proxy_tls_cert_file }}"
+    owner: "{{ teleport_user }}"
+    group: "{{ teleport_group }}"
+    mode: "0644"
+  when: _tp_need_issue | bool
+  notify: Restart Teleport
+
+- name: Use the OpenBao-issued keypair for the Proxy
+  ansible.builtin.set_fact:
+    teleport_proxy_https_keypairs:
+      - cert_file: "{{ teleport_proxy_tls_cert_file }}"
+        key_file: "{{ teleport_proxy_tls_key_file }}"

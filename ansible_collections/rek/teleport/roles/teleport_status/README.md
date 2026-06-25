@@ -61,5 +61,5 @@ ansible-playbook -i playbooks/inventory/hw01.yml playbooks/status.yml \
 ```
 
 As a post-deploy check, run it right after `site.yml`. During bootstrap (before
-ACME issues a cert) you may want `-e teleport_status_verify_tls=false` or
-`-e teleport_status_check_proxy_ping=false`.
+the proxy has a trusted certificate) you may want
+`-e teleport_status_verify_tls=false` or `-e teleport_status_check_proxy_ping=false`.

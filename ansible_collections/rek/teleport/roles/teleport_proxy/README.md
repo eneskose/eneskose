@@ -15,10 +15,29 @@ Depends on `teleport_install`, which runs automatically.
    host to read the CA pin (`tctl status`) and mint a short-lived join token
    (`tctl tokens add`) — no manual copy/paste. Waits (retries) for the Auth
    Service to be reachable.
-3. Renders `/etc/teleport.yaml` with `proxy_service` enabled (and `auth`/`ssh`
+3. Obtains the serving certificate (`teleport_proxy_tls_provider`): either you
+   supply `teleport_proxy_https_keypairs`, or with `openbao` the Proxy issues
+   one from OpenBao/Vault PKI (see below).
+4. Renders `/etc/teleport.yaml` with `proxy_service` enabled (and `auth`/`ssh`
    disabled) plus the cluster-join settings — validated with
    `teleport configtest`.
-4. Enables and starts the `teleport` systemd service.
+5. Enables and starts the `teleport` systemd service.
+
+## TLS certificate
+
+| `teleport_proxy_tls_provider` | Behaviour |
+| --- | --- |
+| `keypairs` (default) | Use the cert/key in `teleport_proxy_https_keypairs` (none → Teleport self-signs) |
+| `openbao` | Issue from OpenBao/Vault PKI on the Proxy host at run time |
+
+With `openbao`, the Proxy runs `community.hashi_vault.vault_pki_generate_certificate`
+locally (so the private key never leaves the Proxy), writes the key (`0600`) and
+cert (leaf + chain) under `teleport_proxy_tls_dir`, and points `https_keypairs`
+at them. It **re-issues only when the cert is missing or within
+`teleport_proxy_openbao_renew_threshold_days` of expiry** (checked with
+`openssl x509 -checkend`), so repeated runs don't churn. Requirements: the
+`community.hashi_vault` collection where Ansible runs, the `hvac` Python library
+on the Proxy (installed by the role), and network access to OpenBao.
 
 ## Auto-join vs explicit
 
@@ -46,10 +65,12 @@ See [`defaults/main.yml`](defaults/main.yml). Highlights:
 | `teleport_ca_pin` | `[]` | Set to pin out-of-band (else auto-discovered) |
 | `teleport_join_token` | `""` | Set to use a static token (else auto-minted) |
 | `teleport_proxy_public_addr` | `teleport.example.com:443` | Public entrypoint |
-| `teleport_proxy_acme_enabled` | `false` | Auto TLS via Let's Encrypt |
+| `teleport_proxy_tls_provider` | `keypairs` | `keypairs` or `openbao` |
 | `teleport_proxy_https_keypairs` | `[]` | Bring-your-own TLS certs |
+| `teleport_proxy_openbao_url` | `""` | OpenBao API address (openbao provider) |
+| `teleport_proxy_openbao_pki_role` | `teleport-proxy` | PKI role to issue from |
 
-## Example (auto-join — the default)
+## Example (auto-join + OpenBao PKI)
 
 ```yaml
 - hosts: teleport_proxy
@@ -59,7 +80,9 @@ See [`defaults/main.yml`](defaults/main.yml). Highlights:
       vars:
         teleport_auth_server: "10.0.1.10:3025"
         teleport_proxy_public_addr: "teleport.example.com:443"
-        teleport_proxy_acme_enabled: true
-        teleport_proxy_acme_email: "ops@example.com"
         # CA pin + join token discovered/minted from the Auth host automatically
+        teleport_proxy_tls_provider: openbao
+        teleport_proxy_openbao_url: "https://openbao.example.com:8200"
+        teleport_proxy_openbao_token: "{{ vault_openbao_token }}"
+        teleport_proxy_openbao_pki_role: teleport-proxy
 ```

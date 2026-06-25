@@ -15,8 +15,11 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `teleport_auth` role: renders and manages the Auth Service `teleport.yaml`
   (cluster name, backend storage, provisioning tokens, authentication).
 - `teleport_proxy` role: renders and manages the Proxy Service `teleport.yaml`
-  including cluster-join configuration (auth server, CA pin, join token) and
-  TLS via ACME or supplied key pairs. Auto-bootstraps the join
+  including cluster-join configuration (auth server, CA pin, join token). TLS is
+  provided either via supplied `teleport_proxy_https_keypairs` or by issuing a
+  certificate from OpenBao/Vault PKI on the Proxy host
+  (`teleport_proxy_tls_provider: openbao`, idempotent with renewal). The ACME
+  provider has been removed. Auto-bootstraps the join
   (`teleport_proxy_autojoin`, default on): when CA pin / join token are empty it
   delegates to an Auth host to read the CA pin (`tctl status`) and mint a
   short-lived token (`tctl tokens add`) — removing the manual step. The sample

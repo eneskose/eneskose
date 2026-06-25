@@ -1,8 +1,13 @@
 # Python dependencies installed into the execution environment.
 #
-# The rek.teleport roles use only ansible.builtin modules (dnf, yum_repository,
-# get_url, unarchive, systemd, user, file, template, copy), so no extra Python
-# libraries are required beyond what the base image already provides.
+# The rek.teleport roles use only ansible.builtin modules, so no extra Python
+# libraries are required in the EE for the default flow.
+#
+# Note on the teleport_proxy 'openbao' TLS provider: the OpenBao PKI module
+# runs ON THE PROXY HOST, so `hvac` is needed there (the role installs it via
+# pip). Uncomment below only if you instead delegate that task to the EE/
+# controller:
+#   hvac
 #
 # Add any future requirements here, e.g.:
 #   jmespath        # for the json_query filter

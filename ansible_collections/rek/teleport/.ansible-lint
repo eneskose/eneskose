@@ -1,6 +1,12 @@
 ---
 profile: production
 
+# community.hashi_vault is an OPTIONAL dependency (only the teleport_proxy
+# 'openbao' TLS provider uses it). Treat its module as known so lint doesn't
+# flag it when the collection isn't installed.
+mock_modules:
+  - community.hashi_vault.vault_pki_generate_certificate
+
 exclude_paths:
   - .cache/
   - .ansible/

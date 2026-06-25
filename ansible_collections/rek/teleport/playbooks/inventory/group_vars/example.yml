@@ -9,9 +9,8 @@ teleport_auth_server: "10.0.1.10:3025"
 # CA pin is auto-discovered from the Auth host at run time (teleport_proxy_autojoin).
 # Set teleport_ca_pin explicitly here only to pin it out-of-band.
 
-# Public entrypoint + ACME contact.
+# Public entrypoint.
 teleport_proxy_public_addr: "teleport.example.com:443"
-teleport_proxy_acme_email: "ops@example.com"
 
 # --- Bastion / jump host ----------------------------------------------------
 # These hosts are not reachable directly; SSH is proxied through a jump host.

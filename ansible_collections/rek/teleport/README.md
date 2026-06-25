@@ -13,7 +13,7 @@ VMs. The collection provides composable roles for the **Auth Service** and the
 | --- | --- |
 | [`teleport_install`](roles/teleport_install/README.md) | Base layer: install `teleport-ent` (repo or tarball), system user, data dir, Enterprise license, hardened systemd unit, shared handlers. |
 | [`teleport_auth`](roles/teleport_auth/README.md) | Render & run the **Auth Service** (cluster CA, backend, tokens, MFA). Private network. |
-| [`teleport_proxy`](roles/teleport_proxy/README.md) | Render & run the **Proxy Service** joined to Auth (CA pin + token, TLS/ACME). Internet-facing. |
+| [`teleport_proxy`](roles/teleport_proxy/README.md) | Render & run the **Proxy Service** joined to Auth (auto CA pin + token; TLS via supplied keypairs or OpenBao PKI). Internet-facing. |
 | [`teleport_cleanup`](roles/teleport_cleanup/README.md) | Completely remove Teleport (service, package, repo, binaries, config, data, user) and return the host to a clean state for a fresh install. |
 | [`teleport_status`](roles/teleport_status/README.md) | Read-only health/state verification (service, version, `/readyz`, proxy ping, `tctl` cluster status, version drift). Reports by default; can assert as a CI/post-deploy gate. |
 | [`teleport_resources`](roles/teleport_resources/README.md) | Apply dynamic cluster resources via `tctl` — RBAC roles, SSO connectors (github/saml/oidc), `cluster_auth_preference`, users. Runs on the Auth node. |
@@ -132,8 +132,10 @@ ansible-playbook -i playbooks/inventory/hosts.yml playbooks/cleanup.yml
         # CA pin + join token auto-bootstrapped from the Auth host
         # (teleport_proxy_autojoin); set them here only to opt out.
         teleport_proxy_public_addr: "teleport.example.com:443"
-        teleport_proxy_acme_enabled: true
-        teleport_proxy_acme_email: "ops@example.com"
+        # TLS: supply teleport_proxy_https_keypairs, or use OpenBao PKI:
+        teleport_proxy_tls_provider: openbao
+        teleport_proxy_openbao_url: "https://openbao.example.com:8200"
+        teleport_proxy_openbao_token: "{{ vault_openbao_token }}"
 ```
 
 ## Security notes

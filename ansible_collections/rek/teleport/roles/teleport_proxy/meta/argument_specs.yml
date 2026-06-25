@@ -52,19 +52,77 @@ argument_specs:
         type: str
         default: "0.0.0.0:443"
         description: Listen address for the web/proxy listener.
-      teleport_proxy_acme_enabled:
-        type: bool
-        default: false
-        description: Obtain TLS certs automatically via Let's Encrypt.
-      teleport_proxy_acme_email:
+      teleport_proxy_tls_provider:
         type: str
-        default: ""
-        description: Contact email for ACME (required when ACME is enabled).
+        default: keypairs
+        choices: [keypairs, openbao]
+        description: >-
+          How the Proxy gets its serving cert: 'keypairs' (you supply
+          teleport_proxy_https_keypairs) or 'openbao' (issued from OpenBao PKI).
       teleport_proxy_https_keypairs:
         type: list
         elements: dict
         default: []
-        description: Explicit TLS key/cert pairs when ACME is disabled.
+        description: >-
+          Explicit TLS key/cert pairs. Auto-populated when tls_provider=openbao.
+      teleport_proxy_openbao_url:
+        type: str
+        default: ""
+        description: OpenBao/Vault API address (required for the openbao provider).
+      teleport_proxy_openbao_token:
+        type: str
+        default: ""
+        description: Token for OpenBao auth (vault it, or use the VAULT_TOKEN env).
+      teleport_proxy_openbao_ca_cert:
+        type: str
+        default: ""
+        description: CA file to verify OpenBao's API TLS.
+      teleport_proxy_openbao_namespace:
+        type: str
+        default: ""
+        description: OpenBao/Vault namespace (usually empty for OpenBao).
+      teleport_proxy_openbao_pki_mount:
+        type: str
+        default: pki
+        description: Mount point of the OpenBao PKI engine.
+      teleport_proxy_openbao_pki_role:
+        type: str
+        default: teleport-proxy
+        description: PKI role used to issue the certificate.
+      teleport_proxy_openbao_cert_ttl:
+        type: str
+        default: "2160h"
+        description: Requested certificate TTL.
+      teleport_proxy_openbao_cert_common_name:
+        type: str
+        default: "{{ teleport_proxy_public_addr | split(':') | first }}"
+        description: Certificate common name (defaults to the public address host).
+      teleport_proxy_openbao_cert_alt_names:
+        type: list
+        elements: str
+        default: []
+        description: Additional DNS SANs.
+      teleport_proxy_openbao_cert_ip_sans:
+        type: list
+        elements: str
+        default: []
+        description: IP SANs.
+      teleport_proxy_openbao_renew_threshold_days:
+        type: int
+        default: 30
+        description: Re-issue when the existing cert expires within this many days.
+      teleport_proxy_tls_dir:
+        type: str
+        default: "{{ teleport_data_dir }}/tls"
+        description: Directory for the openbao-issued cert/key.
+      teleport_proxy_tls_cert_file:
+        type: str
+        default: "{{ teleport_proxy_tls_dir }}/proxy.crt"
+        description: Path of the issued certificate (leaf + chain).
+      teleport_proxy_tls_key_file:
+        type: str
+        default: "{{ teleport_proxy_tls_dir }}/proxy.key"
+        description: Path of the issued private key.
       teleport_proxy_extra_config:
         type: dict
         default: {}

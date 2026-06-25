@@ -16,7 +16,11 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   (cluster name, backend storage, provisioning tokens, authentication).
 - `teleport_proxy` role: renders and manages the Proxy Service `teleport.yaml`
   including cluster-join configuration (auth server, CA pin, join token) and
-  TLS via ACME or supplied key pairs.
+  TLS via ACME or supplied key pairs. Auto-bootstraps the join
+  (`teleport_proxy_autojoin`, default on): when CA pin / join token are empty it
+  delegates to an Auth host to read the CA pin (`tctl status`) and mint a
+  short-lived token (`tctl tokens add`) — removing the manual step. The sample
+  group_vars therefore no longer ship a static `vault_teleport_join_token`.
 - `teleport_cleanup` role: completely removes Teleport (service, unit, package,
   yum repo, tarball binaries, config, env file, data dir, license and managed
   user) to return a host to a clean state for a fresh install. Idempotent and

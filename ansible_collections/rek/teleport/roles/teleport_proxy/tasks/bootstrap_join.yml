@@ -1,0 +1,59 @@
+---
+# Auto-bootstrap the Proxy's join: discover the CA pin and mint a short-lived
+# join token on an Auth host (delegated), so neither has to be supplied by hand.
+# Each step is skipped when the corresponding value was set explicitly, and
+# waits (retries) for the Auth Service to be reachable.
+
+- name: Assert an Auth host is available for auto-join
+  ansible.builtin.assert:
+    that:
+      - teleport_autojoin_auth_host | length > 0
+    fail_msg: >-
+      teleport_proxy_autojoin is true but no Auth host was found. Add a
+      teleport_auth host to the inventory, set teleport_autojoin_auth_host, or
+      disable autojoin and supply teleport_ca_pin / teleport_join_token.
+    quiet: true
+
+- name: Discover the Teleport CA pin from the Auth host
+  ansible.builtin.command: "{{ teleport_tctl_bin }} status"
+  delegate_to: "{{ teleport_autojoin_auth_host }}"
+  become: true
+  run_once: true
+  register: _tp_tctl_status
+  until: _tp_tctl_status.rc == 0
+  retries: 10
+  delay: 3
+  changed_when: false
+  check_mode: false
+  when: teleport_ca_pin | length == 0
+
+- name: Set the discovered CA pin
+  ansible.builtin.set_fact:
+    teleport_ca_pin: "{{ _tp_tctl_status.stdout | regex_findall('sha256:[0-9a-f]+') | unique }}"
+  when:
+    - teleport_ca_pin | length == 0
+    - _tp_tctl_status.stdout is defined
+
+- name: Mint a short-lived proxy join token on the Auth host
+  ansible.builtin.command: >-
+    {{ teleport_tctl_bin }} tokens add --type=proxy,node
+    --ttl={{ teleport_join_token_ttl }} --format=text
+  delegate_to: "{{ teleport_autojoin_auth_host }}"
+  become: true
+  run_once: true
+  register: _tp_token
+  until: _tp_token.rc == 0
+  retries: 10
+  delay: 3
+  changed_when: true
+  check_mode: false
+  no_log: true
+  when: teleport_join_token | length == 0
+
+- name: Set the minted join token
+  ansible.builtin.set_fact:
+    teleport_join_token: "{{ (_tp_token.stdout | trim).split('\n') | first | trim }}"
+  no_log: true
+  when:
+    - teleport_join_token | length == 0
+    - _tp_token.stdout is defined

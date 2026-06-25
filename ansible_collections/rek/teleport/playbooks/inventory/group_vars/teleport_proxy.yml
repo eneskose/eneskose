@@ -3,8 +3,9 @@
 # Environment-specific values (auth server, CA pin, public address, ACME email)
 # live in the per-environment group_vars: example.yml / hw01.yml / dev02.yml.
 
-# Join token (vault-encrypt).
-teleport_join_token: "{{ vault_teleport_join_token }}"
+# Join token + CA pin are auto-bootstrapped from the Auth host at run time
+# (teleport_proxy_autojoin, default true) — nothing to set here. Provide
+# teleport_join_token / teleport_ca_pin explicitly only to opt out.
 
 # TLS via ACME/Let's Encrypt (set false to use teleport_proxy_https_keypairs).
 teleport_proxy_web_listen_addr: "0.0.0.0:443"

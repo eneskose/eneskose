@@ -10,13 +10,27 @@
 # In an HA setup this is typically a load balancer in front of the Auth nodes.
 teleport_auth_server: "auth.example.com:3025"
 
-# CA pin(s) the Proxy verifies when joining — obtained on the Auth host with
-# `tctl status`. Strongly recommended to prevent man-in-the-middle on join.
+# CA pin(s) the Proxy verifies when joining (prevents MITM on join). Leave
+# empty to have it auto-discovered from the Auth host (see autojoin below);
+# set explicitly to pin out-of-band.
 teleport_ca_pin: []
 
-# Join token (vault-encrypt). Obtain with `tctl tokens add --type=proxy`.
+# Join token. Leave empty to have a short-lived token minted on the Auth host
+# at run time (autojoin); set explicitly (vault-encrypt!) to use a static token.
 teleport_join_token: ""
 teleport_join_method: token        # token | iam | ec2 | kubernetes | ...
+
+# --- Auto-bootstrap join (no manual tctl copy/paste) ------------------------
+# When true and teleport_ca_pin / teleport_join_token are empty, the Proxy run
+# delegates to an Auth host to read the CA pin (`tctl status`) and mint a
+# short-lived join token (`tctl tokens add`). Requires an Auth host in the
+# inventory, reachable at run time, with the Auth Service already up.
+teleport_proxy_autojoin: true
+teleport_join_token_ttl: "1h"
+# Auth host the tctl calls are delegated to (defaults to the first Auth node).
+teleport_autojoin_auth_host: "{{ groups['teleport_auth'][0] | default('') }}"
+# tctl binary on the Auth host (derived from the teleport binary path).
+teleport_tctl_bin: "{{ teleport_bin | dirname }}/tctl"
 
 # --- Public addressing ------------------------------------------------------
 # Public address users/clients reach (host:port). With TLS routing this is the

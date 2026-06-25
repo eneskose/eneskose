@@ -53,26 +53,20 @@ environment under [`execution-environment/`](../../../execution-environment/).
    [`playbooks/inventory/`](playbooks/inventory/). Each environment has its own
    inventory file — `hosts.yml` (example), `hw01.yml`, `dev02.yml` — plus a
    matching `group_vars/<env>.yml` for environment-specific values (cluster
-   name, public address, Auth server, CA pin). Shared role defaults stay in
+   name, public address, Auth server). Shared role defaults stay in
    `group_vars/teleport_auth.yml` / `teleport_proxy.yml`; pick an environment
    by pointing `-i` at its file.
-2. Vault-encrypt your secrets (license, join token):
-   ```bash
-   ansible-vault encrypt_string 'proxy,node:<token>' --name vault_teleport_join_token
-   ```
-3. Deploy the whole cluster (Auth first, then Proxy):
+2. Vault-encrypt your Enterprise license (and any other secrets); see the
+   security notes below.
+3. Deploy the whole cluster — Auth first, then Proxy, in one run:
    ```bash
    ansible-playbook -i playbooks/inventory/hosts.yml \
      playbooks/site.yml --ask-vault-pass
    ```
-4. After Auth is up, mint the proxy join token and read the CA pin on the Auth
-   host, then deploy the proxy:
-   ```bash
-   tctl tokens add --type=proxy,node --ttl=1h
-   tctl status                      # copy the CA pin
-   ansible-playbook -i playbooks/inventory/hosts.yml \
-     playbooks/proxy.yml --ask-vault-pass
-   ```
+   The Proxy **auto-bootstraps its join**: it reads the CA pin and mints a
+   short-lived join token from the Auth host (`teleport_proxy_autojoin`, default
+   on), so there's no manual `tctl status` / `tctl tokens add` step. To opt out,
+   set `teleport_ca_pin` / `teleport_join_token` explicitly.
 
 ### Hosts behind a jump host
 
@@ -135,8 +129,8 @@ ansible-playbook -i playbooks/inventory/hosts.yml playbooks/cleanup.yml
       vars:
         teleport_license_src: "files/license.pem"
         teleport_auth_server: "10.0.1.10:3025"
-        teleport_ca_pin: ["sha256:...."]
-        teleport_join_token: "{{ vault_teleport_join_token }}"
+        # CA pin + join token auto-bootstrapped from the Auth host
+        # (teleport_proxy_autojoin); set them here only to opt out.
         teleport_proxy_public_addr: "teleport.example.com:443"
         teleport_proxy_acme_enabled: true
         teleport_proxy_acme_email: "ops@example.com"
@@ -148,9 +142,13 @@ ansible-playbook -i playbooks/inventory/hosts.yml playbooks/cleanup.yml
   with Ansible Vault. License/token tasks use `no_log`.
 - The Auth Service should be on a **private** network only (port 3025). The
   Proxy is the only internet-facing component.
-- Prefer **WebAuthn** MFA (`teleport_auth_second_factor: webauthn`) and
-  short-lived/dynamic join tokens over static tokens.
-- Always set `teleport_ca_pin` so proxies/nodes verify the cluster on join.
+- Prefer **WebAuthn** MFA (`teleport_auth_second_factor: webauthn`). The Proxy
+  uses **short-lived, auto-minted** join tokens by default (`teleport_proxy_autojoin`)
+  rather than long-lived static ones.
+- The Proxy verifies the cluster on join via the **CA pin**, auto-discovered
+  from the Auth host (or set `teleport_ca_pin` to pin it out-of-band). Note that
+  auto-discovery anchors trust on your Ansible→Auth SSH channel — see
+  [`roles/teleport_proxy`](roles/teleport_proxy/README.md).
 - Review `teleport_repo_channel` to match the Teleport major version you intend
   to run.
 

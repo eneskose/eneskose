@@ -11,11 +11,18 @@
       teleport_proxy_web_listen_addr; when ACME is enabled an email is required.
     quiet: true
 
+- name: Auto-discover CA pin and mint join token from the Auth host
+  ansible.builtin.include_tasks: bootstrap_join.yml
+  when:
+    - teleport_proxy_autojoin | bool
+    - (teleport_ca_pin | length == 0) or (teleport_join_token | length == 0)
+
 - name: Warn when joining without a CA pin
   ansible.builtin.debug:
     msg: >-
       WARNING: teleport_ca_pin is empty. Joining without CA pinning is
-      vulnerable to man-in-the-middle attacks. Set it from `tctl status`.
+      vulnerable to man-in-the-middle attacks. Set it, or enable
+      teleport_proxy_autojoin to discover it from the Auth host.
   when: teleport_ca_pin | length == 0
 
 - name: Render Proxy Service configuration

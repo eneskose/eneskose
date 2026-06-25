@@ -7,9 +7,10 @@ teleport_auth_listen_addr: "0.0.0.0:3025"
 # Recommended: hardware-backed MFA.
 teleport_auth_second_factor: "webauthn"
 
-# Bootstrap join token for proxies/nodes (vault-encrypt the value!).
-teleport_auth_tokens:
-  - "proxy,node:{{ vault_teleport_join_token }}"
+# No static provisioning token needed: the proxy auto-mints a short-lived
+# token on this Auth host at run time (teleport_proxy_autojoin). Add entries
+# here only if you want static tokens for other joiners (vault-encrypt them).
+teleport_auth_tokens: []
 
 # Single-instance default uses the built-in SQLite backend. For HA, set an
 # external backend here, e.g. etcd / DynamoDB.

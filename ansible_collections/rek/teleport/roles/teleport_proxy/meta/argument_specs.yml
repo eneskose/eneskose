@@ -11,16 +11,39 @@ argument_specs:
         type: list
         elements: str
         default: []
-        description: CA pin(s) verified on join (from `tctl status`).
+        description: >-
+          CA pin(s) verified on join. Empty -> auto-discovered from the Auth
+          host when teleport_proxy_autojoin is true.
       teleport_join_token:
         type: str
         default: ""
-        description: Provisioning token used to join the cluster (vault it).
+        description: >-
+          Provisioning token used to join. Empty -> a short-lived token is
+          minted on the Auth host when teleport_proxy_autojoin is true. If set
+          explicitly, vault-encrypt it.
       teleport_join_method:
         type: str
         default: token
         choices: [token, iam, ec2, kubernetes, gcp, azure]
         description: Join method.
+      teleport_proxy_autojoin:
+        type: bool
+        default: true
+        description: >-
+          When CA pin / join token are empty, delegate to an Auth host to
+          discover the pin and mint a short-lived token at run time.
+      teleport_join_token_ttl:
+        type: str
+        default: "1h"
+        description: TTL for the auto-minted join token.
+      teleport_autojoin_auth_host:
+        type: str
+        default: "{{ groups['teleport_auth'][0] | default('') }}"
+        description: Inventory host the tctl auto-join calls are delegated to.
+      teleport_tctl_bin:
+        type: str
+        default: "{{ teleport_bin | dirname }}/tctl"
+        description: Path to tctl on the Auth host (for auto-join).
       teleport_proxy_public_addr:
         type: str
         default: "teleport.example.com:443"

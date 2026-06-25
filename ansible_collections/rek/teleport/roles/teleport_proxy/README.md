@@ -9,12 +9,30 @@ Depends on `teleport_install`, which runs automatically.
 
 ## What it does
 
-1. Validates the Proxy-specific variables (and warns when joining without a CA
-   pin).
-2. Renders `/etc/teleport.yaml` with `proxy_service` enabled (and `auth`/`ssh`
+1. Validates the Proxy-specific variables.
+2. **Auto-bootstraps the join** (`teleport_proxy_autojoin`, default true): when
+   `teleport_ca_pin` / `teleport_join_token` are empty, it delegates to an Auth
+   host to read the CA pin (`tctl status`) and mint a short-lived join token
+   (`tctl tokens add`) — no manual copy/paste. Waits (retries) for the Auth
+   Service to be reachable.
+3. Renders `/etc/teleport.yaml` with `proxy_service` enabled (and `auth`/`ssh`
    disabled) plus the cluster-join settings — validated with
    `teleport configtest`.
-3. Enables and starts the `teleport` systemd service.
+4. Enables and starts the `teleport` systemd service.
+
+## Auto-join vs explicit
+
+| | Behaviour |
+| --- | --- |
+| `teleport_proxy_autojoin: true` (default), pin/token empty | Discovered + minted on the Auth host at run time |
+| `teleport_ca_pin` / `teleport_join_token` set | Used as-is (auto-join skipped for that value) |
+| `teleport_proxy_autojoin: false` | Nothing auto-discovered; supply values yourself |
+
+Auto-join needs an Auth host in the inventory (`teleport_autojoin_auth_host`,
+default the first `teleport_auth` member), reachable at run time, with the Auth
+Service up. **Trust note:** the CA pin is fetched over your Ansible→Auth SSH
+channel rather than an independent out-of-band path — fine in the usual model,
+but set `teleport_ca_pin` explicitly if you need true out-of-band pinning.
 
 ## Key variables
 
@@ -23,13 +41,15 @@ See [`defaults/main.yml`](defaults/main.yml). Highlights:
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `teleport_auth_server` | `auth.example.com:3025` | Auth API address (private network) |
-| `teleport_ca_pin` | `[]` | CA pin(s) from `tctl status` (strongly recommended) |
-| `teleport_join_token` | `""` | Join token from `tctl tokens add` (vault it) |
+| `teleport_proxy_autojoin` | `true` | Discover CA pin + mint token from the Auth host |
+| `teleport_join_token_ttl` | `1h` | TTL for the auto-minted token |
+| `teleport_ca_pin` | `[]` | Set to pin out-of-band (else auto-discovered) |
+| `teleport_join_token` | `""` | Set to use a static token (else auto-minted) |
 | `teleport_proxy_public_addr` | `teleport.example.com:443` | Public entrypoint |
 | `teleport_proxy_acme_enabled` | `false` | Auto TLS via Let's Encrypt |
 | `teleport_proxy_https_keypairs` | `[]` | Bring-your-own TLS certs |
 
-## Example
+## Example (auto-join — the default)
 
 ```yaml
 - hosts: teleport_proxy
@@ -38,10 +58,8 @@ See [`defaults/main.yml`](defaults/main.yml). Highlights:
     - role: rek.teleport.teleport_proxy
       vars:
         teleport_auth_server: "10.0.1.10:3025"
-        teleport_ca_pin:
-          - "sha256:1234abcd...."
-        teleport_join_token: "{{ vault_teleport_join_token }}"
         teleport_proxy_public_addr: "teleport.example.com:443"
         teleport_proxy_acme_enabled: true
         teleport_proxy_acme_email: "ops@example.com"
+        # CA pin + join token discovered/minted from the Auth host automatically
 ```

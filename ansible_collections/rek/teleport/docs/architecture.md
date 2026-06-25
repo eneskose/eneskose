@@ -44,17 +44,21 @@ on the same host would require a combined config and is out of scope.
 ## How the Proxy joins the Auth Service
 
 1. Bring up the Auth Service (`teleport_auth`).
-2. On the Auth host, mint a join token and read the CA pin:
-   ```bash
-   tctl tokens add --type=proxy,node --ttl=1h
-   tctl status        # copy the "CA pin: sha256:..." value
-   ```
-3. Feed `teleport_join_token`, `teleport_ca_pin`, and `teleport_auth_server`
-   into the Proxy role and run `teleport_proxy`.
+2. Run the Proxy (`teleport_proxy`). By default (`teleport_proxy_autojoin`) it
+   **auto-bootstraps the join** by delegating to an Auth host:
+   - reads the CA pin from `tctl status`, and
+   - mints a short-lived token with `tctl tokens add --type=proxy,node`.
 
-Static tokens (`teleport_auth_tokens`) are supported for bootstrapping but
-short-lived dynamic tokens or platform join methods (IAM, Kubernetes) are
-preferred in production.
+   In a combined `site.yml` run this is fully automatic; for a standalone
+   `proxy.yml` run an Auth host must be in the inventory and reachable.
+3. To opt out (e.g. air-gapped or out-of-band pinning), set `teleport_ca_pin`
+   and/or `teleport_join_token` explicitly and they are used as-is.
+
+Auto-discovery anchors join trust on the Ansible→Auth SSH channel rather than a
+separate out-of-band path — acceptable in the usual model (Teleport was just
+installed over that same trusted connection). Static provisioning tokens
+(`teleport_auth_tokens`) remain available for other joiners; platform join
+methods (IAM, Kubernetes) are preferred where applicable.
 
 ## Network ports
 

@@ -1,0 +1,28 @@
+---
+# Apply a single Teleport resource document (_tpr_resource) via tctl.
+# _tpr_secret=true suppresses logging for resources carrying secrets (connectors).
+
+- name: Validate resource shape
+  ansible.builtin.assert:
+    that:
+      - _tpr_resource.kind is defined
+      - _tpr_resource.metadata.name is defined
+    fail_msg: "Each Teleport resource needs 'kind' and 'metadata.name'."
+    quiet: true
+
+- name: "Render Teleport resource {{ _tpr_resource.metadata.name }}"
+  ansible.builtin.copy:
+    content: "{{ _tpr_resource | to_nice_yaml(indent=2) }}"
+    dest: "{{ _tpr_tmp.path }}/{{ _tpr_resource.kind }}_{{ _tpr_resource.metadata.name }}.yaml"
+    mode: "0600"
+  register: _tpr_file
+  no_log: "{{ _tpr_secret | bool }}"
+  become: true
+
+- name: "Apply Teleport resource {{ _tpr_resource.metadata.name }}"
+  ansible.builtin.command:
+    cmd: "{{ teleport_tctl_bin }} create --force -f {{ _tpr_file.dest }}"
+  register: _tpr_apply
+  changed_when: true
+  no_log: "{{ _tpr_secret | bool }}"
+  become: true

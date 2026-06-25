@@ -1,0 +1,28 @@
+---
+# ===========================================================================
+# teleport_resources — manage Teleport DYNAMIC resources (RBAC roles, SSO
+# connectors, cluster auth preference, users, ...) by applying them to the Auth
+# server with `tctl`. Runs on an Auth node via the local admin socket; the
+# bundled playbooks/resources.yml targets teleport_auth and run_once.
+#
+# Each variable holds COMPLETE Teleport resource documents (kind, version,
+# metadata, spec), so the role stays schema/version-agnostic: copy specs
+# straight from the Teleport docs and keep secrets in vault.
+# ===========================================================================
+
+teleport_bin: /usr/local/bin/teleport
+teleport_tctl_bin: "{{ teleport_bin | dirname }}/tctl"
+
+# RBAC role resources — applied FIRST (connectors map SSO groups onto them).
+teleport_roles: []
+
+# SSO connector resources (github / saml / oidc) — applied after roles.
+teleport_sso_connectors: []
+
+# cluster_auth_preference resource (single dict; empty -> skipped). Set this to
+# make an SSO connector the default login method and to configure MFA / device
+# trust. Applied after connectors.
+teleport_auth_preference: {}
+
+# Any other resources to apply LAST (users, login_rules, access_lists, ...).
+teleport_resources_extra: []

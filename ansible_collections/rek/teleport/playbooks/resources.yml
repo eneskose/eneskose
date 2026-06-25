@@ -1,0 +1,12 @@
+---
+# Apply Teleport dynamic resources (RBAC roles, SSO connectors, cluster auth
+# preference, ...) to the cluster. Runs once on an Auth node via the local
+# admin socket. Define the resources in (vaulted) group_vars.
+#
+#   ansible-playbook -i playbooks/inventory/hw01.yml playbooks/resources.yml --ask-vault-pass
+- name: Configure Teleport cluster resources
+  hosts: teleport_auth
+  become: true
+  gather_facts: false
+  roles:
+    - role: rek.teleport.teleport_resources

@@ -1,0 +1,70 @@
+---
+# Applied on one Auth node (run_once) using the local admin socket (become).
+
+- name: Determine whether any resources are defined
+  ansible.builtin.set_fact:
+    _tpr_any: >-
+      {{ (teleport_roles | length) > 0
+         or (teleport_sso_connectors | length) > 0
+         or (teleport_auth_preference | length) > 0
+         or (teleport_resources_extra | length) > 0 }}
+  run_once: true
+
+- name: Create secure working directory for rendered resources
+  ansible.builtin.tempfile:
+    state: directory
+    suffix: tp-resources
+  register: _tpr_tmp
+  changed_when: false
+  become: true
+  run_once: true
+  when: _tpr_any | bool
+
+- name: Apply Teleport roles (RBAC)
+  ansible.builtin.include_tasks: apply.yml
+  loop: "{{ teleport_roles }}"
+  loop_control:
+    label: "role/{{ item.metadata.name | default('?') }}"
+  vars:
+    _tpr_resource: "{{ item }}"
+    _tpr_secret: false
+  run_once: true
+
+- name: Apply Teleport SSO connectors
+  ansible.builtin.include_tasks: apply.yml
+  loop: "{{ teleport_sso_connectors }}"
+  loop_control:
+    label: "{{ item.kind | default('connector') }}/{{ item.metadata.name | default('?') }}"
+  vars:
+    _tpr_resource: "{{ item }}"
+    _tpr_secret: true
+  run_once: true
+
+- name: Apply cluster auth preference
+  ansible.builtin.include_tasks: apply.yml
+  vars:
+    _tpr_resource: "{{ teleport_auth_preference }}"
+    _tpr_secret: false
+  when: teleport_auth_preference | length > 0
+  run_once: true
+
+- name: Apply additional Teleport resources
+  ansible.builtin.include_tasks: apply.yml
+  loop: "{{ teleport_resources_extra }}"
+  loop_control:
+    label: "{{ item.kind | default('resource') }}/{{ item.metadata.name | default('?') }}"
+  vars:
+    _tpr_resource: "{{ item }}"
+    _tpr_secret: false
+  run_once: true
+
+- name: Remove working directory
+  ansible.builtin.file:
+    path: "{{ _tpr_tmp.path }}"
+    state: absent
+  changed_when: false
+  become: true
+  run_once: true
+  when:
+    - _tpr_any | bool
+    - _tpr_tmp.path is defined

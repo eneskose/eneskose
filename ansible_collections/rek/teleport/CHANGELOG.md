@@ -25,8 +25,12 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   version, `/readyz`, proxy web API ping, `tctl` cluster status and node count,
   version-drift summary). Reports by default; `teleport_status_assert=true`
   fails the play as a CI/post-deploy gate. Check-mode safe, depends on nothing.
+- `teleport_resources` role: applies dynamic cluster resources via `tctl`
+  (RBAC roles, SSO connectors github/saml/oidc, `cluster_auth_preference`,
+  users) from complete resource documents, in dependency order, on the Auth
+  node. Secrets applied with `no_log`; upsert-only (no pruning).
 - Sample inventory, `group_vars`, and `site.yml` / `auth.yml` / `proxy.yml` /
-  `cleanup.yml` / `status.yml` playbooks.
+  `cleanup.yml` / `status.yml` / `resources.yml` playbooks.
 - Per-environment inventories (`hosts.yml`, `hw01.yml`, `dev02.yml`) with
   jump-host (SSH `ProxyJump`) bootstrap wiring; see `docs/bastion.md`.
 - yamllint and ansible-lint (production profile) configuration.

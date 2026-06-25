@@ -1,0 +1,22 @@
+---
+galaxy_info:
+  role_name: teleport_resources
+  author: Enes Köse
+  description: >-
+    Manage Teleport dynamic resources (RBAC roles, SSO connectors, cluster auth
+    preference, users) by applying complete resource documents to the Auth
+    server with tctl, in dependency order.
+  license: Apache-2.0
+  min_ansible_version: "2.15"
+  platforms:
+    - name: EL
+      versions: ["8", "9"]
+  galaxy_tags:
+    - teleport
+    - security
+    - sso
+    - rbac
+
+# Standalone role — depends on nothing (Teleport is expected to be installed and
+# the Auth service running on the target).
+dependencies: []

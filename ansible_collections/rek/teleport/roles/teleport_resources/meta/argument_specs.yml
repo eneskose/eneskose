@@ -1,0 +1,44 @@
+---
+argument_specs:
+  main:
+    short_description: Apply Teleport dynamic resources (roles, SSO, auth preference).
+    description:
+      - Applies complete Teleport resource documents to the Auth server with
+        `tctl create --force` (upsert), in dependency order — roles, then SSO
+        connectors, then cluster_auth_preference, then extras.
+      - Run on an Auth node with privilege (uses the local admin socket).
+      - Upsert-only — it does not delete resources removed from the variables.
+    options:
+      teleport_roles:
+        type: list
+        elements: dict
+        default: []
+        description: >-
+          Full Teleport `role` resource documents (kind/version/metadata/spec).
+          Applied first so connectors can reference them.
+      teleport_sso_connectors:
+        type: list
+        elements: dict
+        default: []
+        description: >-
+          Full SSO connector documents (github / saml / oidc). Keep client
+          secrets in vault; these are applied with no_log.
+      teleport_auth_preference:
+        type: dict
+        default: {}
+        description: >-
+          A single cluster_auth_preference document. Empty skips it. Use it to
+          set the default connector and MFA / device-trust settings.
+      teleport_resources_extra:
+        type: list
+        elements: dict
+        default: []
+        description: Any other resource documents (users, login_rules, ...), applied last.
+      teleport_bin:
+        type: str
+        default: /usr/local/bin/teleport
+        description: Path to the teleport binary (used to derive tctl).
+      teleport_tctl_bin:
+        type: str
+        default: "{{ teleport_bin | dirname }}/tctl"
+        description: Path to the tctl binary used to apply resources.

@@ -1,0 +1,19 @@
+---
+galaxy_info:
+  role_name: teleport_join
+  author: Enes Köse
+  description: >-
+    Shared helper: auto-bootstrap an agent's cluster join by discovering the
+    CA pin and minting a short-lived join token on an Auth host. Included by
+    the service roles; not usually applied directly.
+  license: Apache-2.0
+  min_ansible_version: "2.15"
+  platforms:
+    - name: EL
+      versions: ["8", "9"]
+  galaxy_tags:
+    - teleport
+    - security
+    - pam
+
+dependencies: []

@@ -111,6 +111,43 @@ argument_specs:
         type: int
         default: 30
         description: Re-issue when the existing cert expires within this many days.
+      teleport_proxy_openbao_manage_role:
+        type: bool
+        default: false
+        description: >-
+          Create/update the PKI role just before issuing. Needs a token with
+          write access to <pki_mount>/roles/<pki_role>.
+      teleport_proxy_openbao_pki_allowed_domains:
+        type: list
+        elements: str
+        default: "{{ ([teleport_proxy_openbao_cert_common_name] + teleport_proxy_openbao_cert_alt_names) | select | list }}"
+        description: >-
+          Domains the managed role may issue for (defaults to the cert common
+          name plus its DNS SANs). Required when manage_role is true.
+      teleport_proxy_openbao_pki_allow_subdomains:
+        type: bool
+        default: false
+        description: Allow subdomains of allowed_domains in the managed role.
+      teleport_proxy_openbao_pki_allow_bare_domains:
+        type: bool
+        default: true
+        description: Allow exact (bare) allowed_domains in the managed role.
+      teleport_proxy_openbao_pki_allow_wildcard_certificates:
+        type: bool
+        default: false
+        description: Allow wildcard certificates from the managed role.
+      teleport_proxy_openbao_pki_server_flag:
+        type: bool
+        default: true
+        description: Set the server EKU flag on certs from the managed role.
+      teleport_proxy_openbao_pki_client_flag:
+        type: bool
+        default: false
+        description: Set the client EKU flag on certs from the managed role.
+      teleport_proxy_openbao_pki_max_ttl:
+        type: str
+        default: "{{ teleport_proxy_openbao_cert_ttl }}"
+        description: Upper bound on the managed role's issuable TTL.
       teleport_proxy_tls_dir:
         type: str
         default: "{{ teleport_data_dir }}/tls"

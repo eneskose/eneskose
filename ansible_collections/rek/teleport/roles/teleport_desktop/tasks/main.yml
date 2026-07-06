@@ -1,0 +1,72 @@
+---
+- name: Validate Windows Desktop Service variables
+  ansible.builtin.assert:
+    that:
+      - teleport_auth_server | length > 0
+      - teleport_desktop_listen_addr | length > 0
+      - >-
+        (teleport_desktop_static_hosts | length > 0)
+        or (teleport_desktop_ldap_addr | length > 0)
+    fail_msg: >-
+      Desktop Service requires teleport_auth_server and
+      teleport_desktop_listen_addr, plus at least one source of Windows hosts:
+      teleport_desktop_static_hosts (non-AD) or teleport_desktop_ldap_addr (AD).
+    quiet: true
+
+- name: Validate Active Directory (LDAP) settings
+  ansible.builtin.assert:
+    that:
+      - teleport_desktop_ldap_domain | length > 0
+      - teleport_desktop_ldap_username | length > 0
+      - teleport_desktop_ldap_sid | length > 0
+    fail_msg: >-
+      teleport_desktop_ldap_addr is set but AD integration also needs
+      teleport_desktop_ldap_domain, teleport_desktop_ldap_username (NetBIOS
+      form) and teleport_desktop_ldap_sid.
+    quiet: true
+  when: teleport_desktop_ldap_addr | length > 0
+
+- name: Validate discovery settings
+  ansible.builtin.assert:
+    that:
+      - teleport_desktop_ldap_addr | length > 0
+    fail_msg: >-
+      teleport_desktop_discovery_base_dn is set but LDAP discovery requires the
+      Active Directory connection (teleport_desktop_ldap_addr et al.).
+    quiet: true
+  when: teleport_desktop_discovery_base_dn | length > 0
+
+- name: Auto-discover CA pin and mint join token from the Auth host
+  ansible.builtin.include_role:
+    name: rek.teleport.teleport_join
+  vars:
+    teleport_join_token_type: "windowsdesktop"
+  when:
+    - teleport_desktop_autojoin | bool
+    - (teleport_ca_pin | length == 0) or (teleport_join_token | length == 0)
+
+- name: Warn when joining without a CA pin
+  ansible.builtin.debug:
+    msg: >-
+      WARNING: teleport_ca_pin is empty. Joining without CA pinning is
+      vulnerable to man-in-the-middle attacks. Set it, or enable
+      teleport_desktop_autojoin to discover it from the Auth host.
+  when: teleport_ca_pin | length == 0
+
+- name: Render Windows Desktop Service configuration
+  ansible.builtin.template:
+    src: teleport-desktop.yaml.j2
+    dest: "{{ teleport_config_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+    validate: "{{ (teleport_bin ~ ' configure --test %s') if (teleport_validate_config | bool) else omit }}"
+  no_log: "{{ teleport_join_token | length > 0 }}"
+  notify: Restart Teleport
+
+- name: Ensure Teleport Windows Desktop Service is enabled and running
+  ansible.builtin.systemd_service:
+    name: "{{ teleport_service_name }}"
+    enabled: "{{ teleport_service_enabled }}"
+    state: "{{ teleport_service_state }}"
+    daemon_reload: true

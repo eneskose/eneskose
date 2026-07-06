@@ -1,0 +1,36 @@
+---
+argument_specs:
+  main:
+    short_description: >-
+      Auto-bootstrap an agent's cluster join (CA pin discovery + short-lived
+      token minting on an Auth host). Included by the service roles.
+    options:
+      teleport_join_token_type:
+        type: str
+        default: "proxy,node"
+        description: >-
+          System role(s) minted into the join token
+          (tctl tokens add --type=...), e.g. proxy,node or windowsdesktop.
+      teleport_join_token_ttl:
+        type: str
+        default: "1h"
+        description: TTL for the auto-minted join token.
+      teleport_ca_pin:
+        type: list
+        elements: str
+        default: []
+        description: >-
+          CA pin(s). Non-empty -> discovery is skipped and the value is kept.
+      teleport_join_token:
+        type: str
+        default: ""
+        description: >-
+          Join token. Non-empty -> minting is skipped and the value is kept.
+      teleport_autojoin_auth_host:
+        type: str
+        default: "{{ groups['teleport_auth'][0] | default('') }}"
+        description: Inventory host the tctl calls are delegated to.
+      teleport_tctl_bin:
+        type: str
+        default: "{{ teleport_bin | dirname }}/tctl"
+        description: Path to tctl on the Auth host.

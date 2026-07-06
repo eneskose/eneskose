@@ -12,6 +12,59 @@ teleport_auth_server: "10.30.2.10:3025"
 # Public entrypoint.
 teleport_proxy_public_addr: "teleport.dev02.example.com:443"
 
+# --- TLS via OpenBao / Vault PKI --------------------------------------------
+# Issue the Proxy serving cert from OpenBao at run time, and have the run
+# create/update the PKI role first (teleport_proxy_openbao_manage_role).
+teleport_proxy_tls_provider: openbao
+
+# Connection to OpenBao.
+teleport_proxy_openbao_url: "https://openbao.dev02.example.com:8200"
+teleport_proxy_openbao_token: "{{ vault_openbao_token }}"   # vault-encrypt this
+teleport_proxy_openbao_ca_cert: "/etc/pki/ca-trust/source/anchors/openbao-ca.pem"
+teleport_proxy_openbao_namespace: ""                        # usually empty for OpenBao
+teleport_proxy_openbao_pki_mount: pki
+teleport_proxy_openbao_pki_role: teleport-proxy
+
+# Certificate request.
+teleport_proxy_openbao_cert_common_name: "teleport.dev02.example.com"
+teleport_proxy_openbao_cert_alt_names:
+  - "teleport.dev02.example.com"
+teleport_proxy_openbao_cert_ip_sans: []
+teleport_proxy_openbao_cert_ttl: "2160h"
+teleport_proxy_openbao_renew_threshold_days: 30
+
+# PKI role managed from Ansible (created/updated just before issuing).
+teleport_proxy_openbao_manage_role: true
+teleport_proxy_openbao_pki_allowed_domains:
+  - "teleport.dev02.example.com"
+teleport_proxy_openbao_pki_allow_subdomains: false
+teleport_proxy_openbao_pki_allow_bare_domains: true
+teleport_proxy_openbao_pki_allow_wildcard_certificates: false
+teleport_proxy_openbao_pki_server_flag: true
+teleport_proxy_openbao_pki_client_flag: false
+teleport_proxy_openbao_pki_max_ttl: "2160h"
+
+# --- Windows Desktop Service --------------------------------------------------
+# Windows hosts gatewayed by desktop1.dev02 (RDP). Non-AD mode: local Windows
+# users, hosts listed statically. Prepare each Windows host out-of-band (import
+# the Teleport user CA, run the Windows Auth Setup) — see the teleport_desktop
+# role README.
+teleport_desktop_static_hosts:
+  - name: win1-dev02
+    ad: false
+    addr: 10.30.2.40
+    labels:
+      env: dev02
+
+# Active Directory mode (optional) — set these to switch from static local-user
+# hosts to AD-joined desktops with LDAP auto-discovery:
+# teleport_desktop_ldap_addr: "ldap.dev02.example.com:636"
+# teleport_desktop_ldap_domain: "dev02.example.com"
+# teleport_desktop_ldap_username: 'DEV02\svc-teleport'
+# teleport_desktop_ldap_sid: "{{ vault_desktop_ldap_sid }}"
+# teleport_desktop_ldap_ca_cert: "{{ vault_desktop_ldap_ca_cert }}"
+# teleport_desktop_discovery_base_dn: "*"
+
 # --- Bastion / jump host ----------------------------------------------------
 # These hosts are not reachable directly; SSH is proxied through a jump host.
 # ProxyJump tunnels the connection end-to-end — your key/agent authenticates

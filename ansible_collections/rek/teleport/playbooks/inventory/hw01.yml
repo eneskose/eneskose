@@ -1,5 +1,5 @@
 ---
-# Environment: hw01. Dedicated Auth and Proxy instances.
+# Environment: hw01. Dedicated Auth, Proxy and Windows Desktop instances.
 # Environment-specific variables live in group_vars/hw01.yml.
 # Usage: ansible-playbook -i playbooks/inventory/hw01.yml playbooks/site.yml
 all:
@@ -14,3 +14,7 @@ all:
           hosts:
             proxy1.hw01.example.com:
               ansible_host: 10.20.1.20
+        teleport_desktop:
+          hosts:
+            desktop1.hw01.example.com:
+              ansible_host: 10.20.1.30

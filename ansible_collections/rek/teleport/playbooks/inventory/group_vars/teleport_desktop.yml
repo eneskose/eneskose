@@ -1,0 +1,14 @@
+---
+# Windows Desktop Service group variables — environment-independent defaults.
+# Environment-specific values (auth server, Windows hosts, AD settings) live in
+# the per-environment group_vars: hw01.yml / dev02.yml.
+
+# Join token + CA pin are auto-bootstrapped from the Auth host at run time
+# (teleport_desktop_autojoin, default true) — nothing to set here. Provide
+# teleport_join_token / teleport_ca_pin explicitly only to opt out.
+
+# Private, Proxy-facing listener (must NOT be internet-reachable).
+teleport_desktop_listen_addr: "0.0.0.0:3028"
+
+# Single-color wallpaper for better visual performance.
+teleport_desktop_show_wallpaper: false

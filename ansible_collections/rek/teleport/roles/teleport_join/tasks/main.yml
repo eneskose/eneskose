@@ -1,17 +1,20 @@
 ---
-# Auto-bootstrap the Proxy's join: discover the CA pin and mint a short-lived
-# join token on an Auth host (delegated), so neither has to be supplied by hand.
-# Each step is skipped when the corresponding value was set explicitly, and
-# waits (retries) for the Auth Service to be reachable.
+# Auto-bootstrap an agent's cluster join: discover the CA pin and mint a
+# short-lived join token on an Auth host (delegated), so neither has to be
+# supplied by hand. Shared by the service roles (Proxy, Windows Desktop);
+# the caller passes teleport_join_token_type for the token it needs. Each step
+# is skipped when the corresponding value was set explicitly, and waits
+# (retries) for the Auth Service to be reachable. Sets the teleport_ca_pin and
+# teleport_join_token facts for the calling role.
 
 - name: Assert an Auth host is available for auto-join
   ansible.builtin.assert:
     that:
       - teleport_autojoin_auth_host | length > 0
     fail_msg: >-
-      teleport_proxy_autojoin is true but no Auth host was found. Add a
-      teleport_auth host to the inventory, set teleport_autojoin_auth_host, or
-      disable autojoin and supply teleport_ca_pin / teleport_join_token.
+      Auto-join is enabled but no Auth host was found. Add a teleport_auth
+      host to the inventory, set teleport_autojoin_auth_host, or disable
+      autojoin and supply teleport_ca_pin / teleport_join_token.
     quiet: true
 
 - name: Discover the Teleport CA pin from the Auth host
@@ -34,9 +37,9 @@
     - teleport_ca_pin | length == 0
     - _tp_tctl_status.stdout is defined
 
-- name: Mint a short-lived proxy join token on the Auth host
+- name: Mint a short-lived join token on the Auth host
   ansible.builtin.command: >-
-    {{ teleport_tctl_bin }} tokens add --type=proxy,node
+    {{ teleport_tctl_bin }} tokens add --type={{ teleport_join_token_type }}
     --ttl={{ teleport_join_token_ttl }} --format=text
   delegate_to: "{{ teleport_autojoin_auth_host }}"
   become: true

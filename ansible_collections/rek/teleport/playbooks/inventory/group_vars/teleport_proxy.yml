@@ -9,6 +9,8 @@
 
 teleport_proxy_web_listen_addr: "0.0.0.0:443"
 
-# TLS: supply certs via teleport_proxy_https_keypairs, or set
-# teleport_proxy_tls_provider: openbao to issue them from OpenBao PKI.
-teleport_proxy_tls_provider: keypairs
+# TLS provider is chosen per environment (group_vars/<env>.yml), because the
+# OpenBao endpoint/role differ per environment. The role default is 'keypairs'
+# (supply certs via teleport_proxy_https_keypairs); hw01/dev02 set 'openbao'.
+# Do not pin it here: teleport_proxy is a child of each env group, so a value
+# set here would override the env's choice.

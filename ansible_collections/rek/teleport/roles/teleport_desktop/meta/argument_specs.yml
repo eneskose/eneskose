@@ -1,0 +1,143 @@
+---
+argument_specs:
+  main:
+    short_description: Configure and run the Teleport Windows Desktop Service.
+    options:
+      teleport_auth_server:
+        type: str
+        required: true
+        description: Auth Service API address (host:3025) on the private network.
+      teleport_ca_pin:
+        type: list
+        elements: str
+        default: []
+        description: >-
+          CA pin(s) verified on join. Empty -> auto-discovered from the Auth
+          host when teleport_desktop_autojoin is true.
+      teleport_join_token:
+        type: str
+        default: ""
+        description: >-
+          Provisioning token used to join. Empty -> a short-lived
+          'windowsdesktop' token is minted on the Auth host when
+          teleport_desktop_autojoin is true. If set explicitly, vault-encrypt it.
+      teleport_join_method:
+        type: str
+        default: token
+        choices: [token, iam, ec2, kubernetes, gcp, azure]
+        description: Join method.
+      teleport_desktop_autojoin:
+        type: bool
+        default: true
+        description: >-
+          When CA pin / join token are empty, include the shared teleport_join
+          role to discover the pin and mint a short-lived token at run time.
+      teleport_join_token_ttl:
+        type: str
+        default: "1h"
+        description: TTL for the auto-minted join token.
+      teleport_autojoin_auth_host:
+        type: str
+        default: "{{ groups['teleport_auth'][0] | default('') }}"
+        description: Inventory host the tctl auto-join calls are delegated to.
+      teleport_tctl_bin:
+        type: str
+        default: "{{ teleport_bin | dirname }}/tctl"
+        description: Path to tctl on the Auth host (for auto-join).
+      teleport_desktop_listen_addr:
+        type: str
+        default: "0.0.0.0:3028"
+        description: >-
+          Listen address of the Desktop Service (private network; only the
+          Proxy connects here).
+      teleport_desktop_public_addr:
+        type: str
+        default: ""
+        description: >-
+          Optional address advertised to the cluster for incoming Proxy
+          connections.
+      teleport_desktop_show_wallpaper:
+        type: bool
+        default: false
+        description: >-
+          Show the user-selected wallpaper in sessions (false = single-color,
+          better performance).
+      teleport_desktop_static_hosts:
+        type: list
+        elements: dict
+        default: []
+        description: >-
+          Windows hosts registered as WindowsDesktop objects. Items:
+          {name, ad (false for local users), addr, labels}. Required unless AD
+          integration is configured.
+      teleport_desktop_ldap_addr:
+        type: str
+        default: ""
+        description: >-
+          LDAPS address (host:636) of the Active Directory domain. Setting it
+          enables AD integration and requires domain/username/sid.
+      teleport_desktop_ldap_domain:
+        type: str
+        default: ""
+        description: Active Directory domain name.
+      teleport_desktop_ldap_username:
+        type: str
+        default: ""
+        description: LDAP service account in NetBIOS form (EXAMPLE\svc-teleport).
+      teleport_desktop_ldap_sid:
+        type: str
+        default: ""
+        description: Security identifier (S-...) of the LDAP service account.
+      teleport_desktop_ldap_server_name:
+        type: str
+        default: ""
+        description: Server name for LDAPS cert validation when addr is an IP.
+      teleport_desktop_ldap_ca_cert:
+        type: str
+        default: ""
+        description: PEM content of the CA that signed the LDAPS certificate.
+      teleport_desktop_ldap_insecure_skip_verify:
+        type: bool
+        default: false
+        description: Skip LDAPS certificate verification (not recommended).
+      teleport_desktop_kdc_address:
+        type: str
+        default: ""
+        description: >-
+          Kerberos KDC address for RDP NLA (AD only; empty = derived from the
+          LDAP address).
+      teleport_desktop_pki_domain:
+        type: str
+        default: ""
+        description: Override the AD domain used for PKI (child-domain setups).
+      teleport_desktop_discovery_base_dn:
+        type: str
+        default: ""
+        description: >-
+          LDAP base DN for automatic desktop discovery ('*' = whole domain;
+          empty = disabled). Requires the ldap block.
+      teleport_desktop_discovery_filters:
+        type: list
+        elements: str
+        default: []
+        description: Additional LDAP filters for discovery.
+      teleport_desktop_discovery_label_attributes:
+        type: list
+        elements: str
+        default: []
+        description: LDAP attributes imported as ldap/<attr> Teleport labels.
+      teleport_desktop_host_labels:
+        type: list
+        elements: dict
+        default: []
+        description: >-
+          Regex label rules applied to Windows hosts by hostname. Items:
+          {match: <regex>, labels: {...}}.
+      teleport_desktop_labels:
+        type: dict
+        default: {}
+        description: Labels attached to the Desktop Service itself.
+      teleport_desktop_extra_config:
+        type: dict
+        default: {}
+        description: Extra keys merged into windows_desktop_service.

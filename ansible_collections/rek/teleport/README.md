@@ -1,8 +1,9 @@
 # Ansible Collection — `rek.teleport`
 
 Deploy and manage **self-hosted Teleport Enterprise (PAM)** clusters on Linux
-VMs. The collection provides composable roles for the **Auth Service** and the
-**Proxy Service** running on dedicated instances.
+VMs. The collection provides composable roles for the **Auth Service**, the
+**Proxy Service** and the **Windows Desktop Service** running on dedicated
+instances.
 
 > Teleport Enterprise is the commercial edition and requires a license file.
 > Set `teleport_edition: oss` to deploy the open-source edition instead.
@@ -14,11 +15,13 @@ VMs. The collection provides composable roles for the **Auth Service** and the
 | [`teleport_install`](roles/teleport_install/README.md) | Base layer: install `teleport-ent` (repo or tarball), system user, data dir, Enterprise license, hardened systemd unit, shared handlers. |
 | [`teleport_auth`](roles/teleport_auth/README.md) | Render & run the **Auth Service** (cluster CA, backend, tokens, MFA). Private network. |
 | [`teleport_proxy`](roles/teleport_proxy/README.md) | Render & run the **Proxy Service** joined to Auth (auto CA pin + token; TLS via supplied keypairs or OpenBao PKI). Internet-facing. |
+| [`teleport_desktop`](roles/teleport_desktop/README.md) | Render & run the **Windows Desktop Service** joined to Auth — the RDP gateway for Windows hosts (static non-AD hosts and/or Active Directory discovery). Private network. |
+| [`teleport_join`](roles/teleport_join/README.md) | Internal helper: auto-bootstrap an agent's join (CA-pin discovery + short-lived token minting on the Auth host). Included by the service roles. |
 | [`teleport_cleanup`](roles/teleport_cleanup/README.md) | Completely remove Teleport (service, package, repo, binaries, config, data, user) and return the host to a clean state for a fresh install. |
 | [`teleport_status`](roles/teleport_status/README.md) | Read-only health/state verification (service, version, `/readyz`, proxy ping, `tctl` cluster status, version drift). Reports by default; can assert as a CI/post-deploy gate. |
 | [`teleport_resources`](roles/teleport_resources/README.md) | Apply dynamic cluster resources via `tctl` — RBAC roles, SSO connectors (github/saml/oidc), `cluster_auth_preference`, users. Runs on the Auth node. |
 
-The two service roles depend on `teleport_install`, so applying a service role
+The service roles depend on `teleport_install`, so applying a service role
 pulls the base role in automatically. `teleport_cleanup`, `teleport_status` and
 `teleport_resources` are standalone and depend on nothing. See
 [`docs/architecture.md`](docs/architecture.md) for the design rationale, the
@@ -54,19 +57,21 @@ environment under [`execution-environment/`](../../../execution-environment/).
    inventory file — `hosts.yml` (example), `hw01.yml`, `dev02.yml` — plus a
    matching `group_vars/<env>.yml` for environment-specific values (cluster
    name, public address, Auth server). Shared role defaults stay in
-   `group_vars/teleport_auth.yml` / `teleport_proxy.yml`; pick an environment
-   by pointing `-i` at its file.
+   `group_vars/teleport_auth.yml` / `teleport_proxy.yml` /
+   `teleport_desktop.yml`; pick an environment by pointing `-i` at its file.
 2. Vault-encrypt your Enterprise license (and any other secrets); see the
    security notes below.
-3. Deploy the whole cluster — Auth first, then Proxy, in one run:
+3. Deploy the whole cluster — Auth first, then Proxy, then the Windows Desktop
+   Service (if the inventory has one) — in one run:
    ```bash
    ansible-playbook -i playbooks/inventory/hosts.yml \
      playbooks/site.yml --ask-vault-pass
    ```
-   The Proxy **auto-bootstraps its join**: it reads the CA pin and mints a
-   short-lived join token from the Auth host (`teleport_proxy_autojoin`, default
-   on), so there's no manual `tctl status` / `tctl tokens add` step. To opt out,
-   set `teleport_ca_pin` / `teleport_join_token` explicitly.
+   The Proxy and the Desktop Service **auto-bootstrap their join**: each reads
+   the CA pin and mints a short-lived join token from the Auth host
+   (`teleport_proxy_autojoin` / `teleport_desktop_autojoin`, default on), so
+   there's no manual `tctl status` / `tctl tokens add` step. To opt out, set
+   `teleport_ca_pin` / `teleport_join_token` explicitly.
 
 ### Hosts behind a jump host
 

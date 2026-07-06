@@ -37,9 +37,19 @@ place:
   `teleport.yaml`, validate it with `teleport configure --test`, and start the
   service — notifying the inherited restart handler on change.
 
-This keeps install logic DRY and the two service roles independently usable and
-single-responsibility. Single-purpose nodes are assumed; running Auth and Proxy
-on the same host would require a combined config and is out of scope.
+This keeps install logic DRY and the service roles independently usable and
+single-responsibility. Single-purpose nodes are assumed; running several
+services on the same host would require a combined config and is out of scope.
+
+**`teleport_desktop`** follows the same pattern on a third (private) Linux
+instance: it depends on `teleport_install`, renders a `teleport.yaml` with only
+`windows_desktop_service` enabled, and joins the cluster like the Proxy does.
+It is the RDP gateway: it registers Windows hosts (statically, or discovered
+from Active Directory via LDAP) and proxies RDP sessions. Only the Proxy
+connects to it; users always come in through the Proxy web UI. The join logic
+shared by Proxy and Desktop lives in the internal **`teleport_join`** helper
+role (CA-pin discovery + short-lived token minting on the Auth host,
+parameterized by token type).
 
 ## How the Proxy joins the Auth Service
 
@@ -70,7 +80,9 @@ methods (IAM, Kubernetes) are preferred where applicable.
 | 3024 | Proxy | public | Reverse tunnel for trusted clusters / agents |
 | 3080 | Proxy | public | Legacy web UI port (older configs) |
 | 3026 | Proxy | public | Kubernetes proxy (when not multiplexed) |
-| 3000 | both | private | Optional diagnostics/metrics (`teleport_diag_addr`) |
+| 3028 | Desktop | private | Windows Desktop Service (only the Proxy connects) |
+| 3389 | Windows hosts | private | RDP, reached from the Desktop Service |
+| 3000 | all | private | Optional diagnostics/metrics (`teleport_diag_addr`) |
 
 With `proxy_listener_mode: multiplex` (the default here), clients use **443**
 for everything and the other proxy ports are not required.

@@ -11,9 +11,12 @@
       - teleport_proxy_openbao_url | length > 0
       - teleport_proxy_openbao_pki_role | length > 0
       - teleport_proxy_openbao_cert_common_name | length > 0
+      - (not (teleport_proxy_openbao_manage_role | bool)) or (teleport_proxy_openbao_pki_allowed_domains | length > 0)
     fail_msg: >-
       teleport_proxy_tls_provider is 'openbao' but teleport_proxy_openbao_url,
-      teleport_proxy_openbao_pki_role and a common name are required.
+      teleport_proxy_openbao_pki_role and a common name are required; with
+      teleport_proxy_openbao_manage_role enabled,
+      teleport_proxy_openbao_pki_allowed_domains must be non-empty too.
     quiet: true
 
 - name: Ensure pip is available on the Proxy
@@ -45,6 +48,30 @@
   ansible.builtin.set_fact:
     _tp_need_issue: "{{ (not _tp_cert_stat.stat.exists) or ((_tp_cert_checkend.rc | default(1)) != 0) }}"
 
+# Create/update the PKI role *before* requesting the cert, so the role policy
+# always matches what we're about to ask for. Only runs when we're (re)issuing
+# and role management is enabled (it needs a write-capable token).
+- name: Create/update the Proxy PKI role in OpenBao
+  community.hashi_vault.vault_write:
+    url: "{{ teleport_proxy_openbao_url }}"
+    token: "{{ teleport_proxy_openbao_token or omit }}"
+    auth_method: token
+    ca_cert: "{{ teleport_proxy_openbao_ca_cert or omit }}"
+    namespace: "{{ teleport_proxy_openbao_namespace or omit }}"
+    path: "{{ teleport_proxy_openbao_pki_mount }}/roles/{{ teleport_proxy_openbao_pki_role }}"
+    data:
+      allowed_domains: "{{ teleport_proxy_openbao_pki_allowed_domains }}"
+      allow_subdomains: "{{ teleport_proxy_openbao_pki_allow_subdomains | bool }}"
+      allow_bare_domains: "{{ teleport_proxy_openbao_pki_allow_bare_domains | bool }}"
+      allow_wildcard_certificates: "{{ teleport_proxy_openbao_pki_allow_wildcard_certificates | bool }}"
+      server_flag: "{{ teleport_proxy_openbao_pki_server_flag | bool }}"
+      client_flag: "{{ teleport_proxy_openbao_pki_client_flag | bool }}"
+      max_ttl: "{{ teleport_proxy_openbao_pki_max_ttl }}"
+  no_log: true
+  when:
+    - teleport_proxy_openbao_manage_role | bool
+    - _tp_need_issue | bool
+
 - name: Issue the Proxy certificate from OpenBao PKI
   community.hashi_vault.vault_pki_generate_certificate:
     url: "{{ teleport_proxy_openbao_url }}"
@@ -73,7 +100,7 @@
 
 - name: Write the Proxy private key
   ansible.builtin.copy:
-    content: "{{ _tp_bao.data.private_key }}\n"
+    content: "{{ _tp_bao.data.data.private_key }}\n"
     dest: "{{ teleport_proxy_tls_key_file }}"
     owner: "{{ teleport_user }}"
     group: "{{ teleport_group }}"
@@ -84,7 +111,7 @@
 
 - name: Write the Proxy certificate (leaf + chain)
   ansible.builtin.copy:
-    content: "{{ _tp_bao.data.certificate }}\n{{ (_tp_bao.data.ca_chain | default([])) | join('\n') }}\n"
+    content: "{{ _tp_bao.data.data.certificate }}\n{{ (_tp_bao.data.data.ca_chain | default([])) | join('\n') }}\n"
     dest: "{{ teleport_proxy_tls_cert_file }}"
     owner: "{{ teleport_user }}"
     group: "{{ teleport_group }}"

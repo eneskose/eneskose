@@ -1,0 +1,84 @@
+---
+# ===========================================================================
+# teleport_desktop — Windows Desktop Service configuration.
+# Inherits base/global variables from teleport_install.
+# Runs on a dedicated LINUX instance on the private network: it is the RDP
+# gateway between the Proxy and the Windows hosts. Only the Proxy connects to
+# it; users come in through the Proxy web UI.
+# ===========================================================================
+
+# --- Cluster join (how the Desktop Service connects to the Auth Service) ----
+# Address of the Auth Service API (host:3025), reachable on the private network.
+teleport_auth_server: "auth.example.com:3025"
+
+# CA pin(s) verified when joining (prevents MITM on join). Leave empty to have
+# it auto-discovered from the Auth host (see autojoin below); set explicitly
+# to pin out-of-band.
+teleport_ca_pin: []
+
+# Join token. Leave empty to have a short-lived token minted on the Auth host
+# at run time (autojoin); set explicitly (vault-encrypt!) to use a static token.
+teleport_join_token: ""
+teleport_join_method: token        # token | iam | ec2 | kubernetes | ...
+
+# --- Auto-bootstrap join (shared teleport_join role) -------------------------
+# When true and teleport_ca_pin / teleport_join_token are empty, delegate to an
+# Auth host to read the CA pin and mint a short-lived 'windowsdesktop' token.
+teleport_desktop_autojoin: true
+teleport_join_token_ttl: "1h"
+# Auth host the tctl calls are delegated to (defaults to the first Auth node).
+teleport_autojoin_auth_host: "{{ groups['teleport_auth'][0] | default('') }}"
+# tctl binary on the Auth host (derived from the teleport binary path).
+teleport_tctl_bin: "{{ teleport_bin | dirname }}/tctl"
+
+# --- Service addressing -------------------------------------------------------
+# Listen address for the Desktop Service (private network; only the Proxy
+# connects here — port 3028 by convention).
+teleport_desktop_listen_addr: "0.0.0.0:3028"
+# Optional address advertised to the rest of the cluster for incoming Proxy
+# connections. Leave empty to use the node's default.
+teleport_desktop_public_addr: ""
+
+# Show the user-selected wallpaper in sessions (false = single-color wallpaper,
+# better visual performance).
+teleport_desktop_show_wallpaper: false
+
+# --- Windows hosts without Active Directory (static registration) ------------
+# Hosts registered as WindowsDesktop objects. Each item:
+#   {name: <resource name>, ad: false, addr: <host:3389 or host>, labels: {...}}
+# Prep each Windows host out-of-band: import the Teleport user CA and run the
+# Teleport Windows Auth Setup program (see README).
+teleport_desktop_static_hosts: []
+
+# --- Active Directory / LDAP (optional) --------------------------------------
+# Set teleport_desktop_ldap_addr to enable AD integration; the remaining ldap_*
+# values are then required (except server_name / ca_cert, which are optional
+# hardening). Leave addr empty for non-AD (static_hosts only) operation.
+teleport_desktop_ldap_addr: ""                 # e.g. ldap.example.com:636 (LDAPS)
+teleport_desktop_ldap_domain: ""               # AD domain, e.g. example.com
+teleport_desktop_ldap_username: ""             # NetBIOS form, e.g. EXAMPLE\svc-teleport
+teleport_desktop_ldap_sid: ""                  # SID of that service account (S-...)
+teleport_desktop_ldap_server_name: ""          # cert name override when addr is an IP
+teleport_desktop_ldap_ca_cert: ""              # PEM content of the LDAPS CA
+teleport_desktop_ldap_insecure_skip_verify: false
+# Kerberos KDC address for RDP NLA (AD only; empty = derive from LDAP address).
+teleport_desktop_kdc_address: ""
+# Override the AD domain used for PKI operations (child-domain setups).
+teleport_desktop_pki_domain: ""
+
+# --- Automatic desktop discovery via LDAP (requires the ldap block) ----------
+# '*' discovers every host in the domain; a custom DN refines the search;
+# empty disables discovery.
+teleport_desktop_discovery_base_dn: ""
+teleport_desktop_discovery_filters: []         # LDAP filters, e.g. ['(!(primaryGroupID=516))']
+teleport_desktop_discovery_label_attributes: []  # LDAP attrs imported as ldap/<attr> labels
+
+# --- Labels -------------------------------------------------------------------
+# Regex rules applying labels to Windows hosts by hostname. Each item:
+#   {match: '^.*\.dev\.example\.com', labels: {environment: dev}}
+teleport_desktop_host_labels: []
+# Labels attached to the Desktop Service itself (not the Windows hosts).
+teleport_desktop_labels: {}
+
+# Free-form mapping merged into windows_desktop_service for advanced options.
+teleport_desktop_extra_config: {}

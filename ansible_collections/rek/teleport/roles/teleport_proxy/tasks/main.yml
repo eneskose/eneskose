@@ -13,7 +13,10 @@
     quiet: true
 
 - name: Auto-discover CA pin and mint join token from the Auth host
-  ansible.builtin.include_tasks: bootstrap_join.yml
+  ansible.builtin.include_role:
+    name: rek.teleport.teleport_join
+  vars:
+    teleport_join_token_type: "proxy,node"
   when:
     - teleport_proxy_autojoin | bool
     - (teleport_ca_pin | length == 0) or (teleport_join_token | length == 0)

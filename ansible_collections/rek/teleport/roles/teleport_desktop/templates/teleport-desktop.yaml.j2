@@ -1,0 +1,111 @@
+{{ ansible_managed | comment }}
+# Teleport Windows Desktop Service configuration — managed by Ansible. Do not edit by hand.
+version: {{ teleport_config_version }}
+
+teleport:
+  nodename: {{ teleport_nodename }}
+  data_dir: {{ teleport_data_dir }}
+  auth_server: {{ teleport_auth_server }}
+  log:
+    output: {{ teleport_log_output }}
+    severity: {{ teleport_log_severity }}
+    format:
+      output: {{ teleport_log_format }}
+{% if teleport_diag_addr | length %}
+  diag_addr: {{ teleport_diag_addr }}
+{% endif %}
+{% if teleport_ca_pin | length %}
+  ca_pin:
+{% for pin in teleport_ca_pin %}
+    - "{{ pin }}"
+{% endfor %}
+{% endif %}
+{% if teleport_join_token | length %}
+  join_params:
+    method: {{ teleport_join_method }}
+    token_name: "{{ teleport_join_token }}"
+{% endif %}
+
+# This node is dedicated to the Windows Desktop Service.
+auth_service:
+  enabled: "no"
+
+ssh_service:
+  enabled: "no"
+
+proxy_service:
+  enabled: "no"
+
+windows_desktop_service:
+  enabled: "yes"
+  listen_addr: {{ teleport_desktop_listen_addr }}
+{% if teleport_desktop_public_addr | length %}
+  public_addr: {{ teleport_desktop_public_addr }}
+{% endif %}
+  show_desktop_wallpaper: {{ teleport_desktop_show_wallpaper | bool | lower }}
+{% if teleport_desktop_ldap_addr | length %}
+  ldap:
+    addr: "{{ teleport_desktop_ldap_addr }}"
+    domain: "{{ teleport_desktop_ldap_domain }}"
+    username: '{{ teleport_desktop_ldap_username }}'
+    sid: "{{ teleport_desktop_ldap_sid }}"
+{% if teleport_desktop_ldap_server_name | length %}
+    server_name: "{{ teleport_desktop_ldap_server_name }}"
+{% endif %}
+    insecure_skip_verify: {{ teleport_desktop_ldap_insecure_skip_verify | bool | lower }}
+{% if teleport_desktop_ldap_ca_cert | length %}
+    ldap_ca_cert: |
+{{ teleport_desktop_ldap_ca_cert | indent(6, true) }}
+{% endif %}
+{% if teleport_desktop_pki_domain | length %}
+  pki_domain: {{ teleport_desktop_pki_domain }}
+{% endif %}
+{% if teleport_desktop_kdc_address | length %}
+  kdc_address: "{{ teleport_desktop_kdc_address }}"
+{% endif %}
+{% if teleport_desktop_discovery_base_dn | length %}
+  discovery:
+    base_dn: '{{ teleport_desktop_discovery_base_dn }}'
+{% if teleport_desktop_discovery_filters | length %}
+    filters:
+{% for f in teleport_desktop_discovery_filters %}
+      - '{{ f }}'
+{% endfor %}
+{% endif %}
+{% if teleport_desktop_discovery_label_attributes | length %}
+    label_attributes:
+{% for attr in teleport_desktop_discovery_label_attributes %}
+      - {{ attr }}
+{% endfor %}
+{% endif %}
+{% endif %}
+{% endif %}
+{% if teleport_desktop_static_hosts | length %}
+  static_hosts:
+{% for host in teleport_desktop_static_hosts %}
+    - addr: {{ host.addr }}
+{% if host.name is defined %}
+      name: {{ host.name }}
+{% endif %}
+      ad: {{ host.ad | default(false) | bool | lower }}
+{% if host.labels is defined and host.labels | length %}
+      labels:
+{{ host.labels | to_nice_yaml(indent=2) | indent(8, true) }}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% if teleport_desktop_host_labels | length %}
+  host_labels:
+{% for rule in teleport_desktop_host_labels %}
+    - match: '{{ rule.match }}'
+      labels:
+{{ rule.labels | to_nice_yaml(indent=2) | indent(8, true) }}
+{% endfor %}
+{% endif %}
+{% if teleport_desktop_labels | length %}
+  labels:
+{{ teleport_desktop_labels | to_nice_yaml(indent=2) | indent(4, true) }}
+{% endif %}
+{% if teleport_desktop_extra_config | length %}
+{{ teleport_desktop_extra_config | to_nice_yaml(indent=2) | indent(2, true) }}
+{% endif %}

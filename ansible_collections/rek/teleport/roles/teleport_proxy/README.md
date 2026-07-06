@@ -11,13 +11,15 @@ Depends on `teleport_install`, which runs automatically.
 
 1. Validates the Proxy-specific variables.
 2. **Auto-bootstraps the join** (`teleport_proxy_autojoin`, default true): when
-   `teleport_ca_pin` / `teleport_join_token` are empty, it delegates to an Auth
-   host to read the CA pin (`tctl status`) and mint a short-lived join token
-   (`tctl tokens add`) — no manual copy/paste. Waits (retries) for the Auth
-   Service to be reachable.
+   `teleport_ca_pin` / `teleport_join_token` are empty, it includes the shared
+   [`teleport_join`](../teleport_join/README.md) role (token type `proxy,node`),
+   which delegates to an Auth host to read the CA pin (`tctl status`) and mint
+   a short-lived join token (`tctl tokens add`) — no manual copy/paste. Waits
+   (retries) for the Auth Service to be reachable.
 3. Obtains the serving certificate (`teleport_proxy_tls_provider`): either you
    supply `teleport_proxy_https_keypairs`, or with `openbao` the Proxy issues
-   one from OpenBao/Vault PKI (see below).
+   one from OpenBao/Vault PKI — optionally **creating/updating the PKI role
+   first** (`teleport_proxy_openbao_manage_role`) — see below.
 4. Renders `/etc/teleport.yaml` with `proxy_service` enabled (and `auth`/`ssh`
    disabled) plus the cluster-join settings — validated with
    `teleport configure --test`.
@@ -38,6 +40,21 @@ at them. It **re-issues only when the cert is missing or within
 `openssl x509 -checkend`), so repeated runs don't churn. Requirements: the
 `community.hashi_vault` collection where Ansible runs, the `hvac` Python library
 on the Proxy (installed by the role), and network access to OpenBao.
+
+### Managing the PKI role (optional)
+
+Set `teleport_proxy_openbao_manage_role: true` to have the run **create/update
+the PKI role it issues from, just before issuing** (via
+`community.hashi_vault.vault_write` to `<pki_mount>/roles/<pki_role>`), so the
+role policy always matches the cert request. The policy is driven by
+`teleport_proxy_openbao_pki_allowed_domains` (defaults to the cert common name
+plus its DNS SANs),
+`teleport_proxy_openbao_pki_allow_{subdomains,bare_domains,wildcard_certificates}`,
+the `server_flag`/`client_flag` EKUs, and `teleport_proxy_openbao_pki_max_ttl`.
+It runs only when a (re)issue is needed, so converged runs stay quiet. **Token
+note:** this needs an OpenBao token with write access to the role path — broader
+than the issue-only capability the certificate step requires; leave the toggle
+off if the PKI admin provisions the role out-of-band.
 
 ## Auto-join vs explicit
 

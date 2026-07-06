@@ -6,7 +6,7 @@
 # Strict gate (fail the play on any unhealthy result):
 #   ... playbooks/status.yml -e teleport_status_assert=true
 - name: Verify Teleport cluster health
-  hosts: teleport_auth:teleport_proxy
+  hosts: teleport_auth:teleport_proxy:teleport_desktop
   become: true
   gather_facts: false
   roles:

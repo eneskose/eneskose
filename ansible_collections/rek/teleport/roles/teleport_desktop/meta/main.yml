@@ -1,0 +1,22 @@
+---
+galaxy_info:
+  role_name: teleport_desktop
+  author: Enes Köse
+  description: >-
+    Configure and run the Teleport Windows Desktop Service on a dedicated
+    Linux instance, joined to an existing Auth Service. Gateways RDP to
+    Windows hosts (static non-AD hosts and/or Active Directory discovery).
+  license: Apache-2.0
+  min_ansible_version: "2.15"
+  platforms:
+    - name: EL
+      versions: ["8", "9"]
+  galaxy_tags:
+    - teleport
+    - security
+    - pam
+    - rdp
+    - windows
+
+dependencies:
+  - role: teleport_install

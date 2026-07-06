@@ -1,0 +1,8 @@
+---
+# Deploy only the Windows Desktop Service (Auth must already be reachable).
+- name: Deploy Teleport Windows Desktop Service
+  hosts: teleport_desktop
+  become: true
+  gather_facts: true
+  roles:
+    - role: rek.teleport.teleport_desktop

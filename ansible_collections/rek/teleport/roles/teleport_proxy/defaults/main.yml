@@ -65,6 +65,28 @@ teleport_proxy_openbao_cert_alt_names: []
 teleport_proxy_openbao_cert_ip_sans: []
 teleport_proxy_openbao_renew_threshold_days: 30
 
+# --- OpenBao PKI role management (optional) ----------------------------------
+# When true, the Proxy run creates/updates the PKI *role* it issues from, just
+# before issuing — so the role always matches the cert request. Leave false if
+# the role is provisioned out-of-band by the PKI admin. NOTE: managing the role
+# needs an OpenBao token with write access to <pki_mount>/roles/<pki_role>,
+# which is broader than the issue-only capability the certificate step needs.
+teleport_proxy_openbao_manage_role: false
+
+# Domains the role may issue for. Defaults to the cert common name plus its DNS
+# SANs, so an issued cert is always within the role's policy.
+teleport_proxy_openbao_pki_allowed_domains: >-
+  {{ ([teleport_proxy_openbao_cert_common_name] + teleport_proxy_openbao_cert_alt_names) | select | list }}
+teleport_proxy_openbao_pki_allow_subdomains: false
+teleport_proxy_openbao_pki_allow_bare_domains: true
+teleport_proxy_openbao_pki_allow_wildcard_certificates: false
+# Extended Key Usage on issued certs. A proxy serving cert needs the server
+# flag; enable client too only if the same cert is reused for mTLS clients.
+teleport_proxy_openbao_pki_server_flag: true
+teleport_proxy_openbao_pki_client_flag: false
+# Upper bound on the role's issuable TTL (must be >= the requested cert TTL).
+teleport_proxy_openbao_pki_max_ttl: "{{ teleport_proxy_openbao_cert_ttl }}"
+
 # Where the issued cert/key are written (openbao provider).
 teleport_proxy_tls_dir: "{{ teleport_data_dir }}/tls"
 teleport_proxy_tls_cert_file: "{{ teleport_proxy_tls_dir }}/proxy.crt"

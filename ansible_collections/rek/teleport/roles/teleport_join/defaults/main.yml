@@ -1,0 +1,23 @@
+---
+# ===========================================================================
+# teleport_join — shared auto-bootstrap of an agent's cluster join.
+# Included by the service roles (teleport_proxy, teleport_desktop); not
+# usually applied directly. Sets teleport_ca_pin / teleport_join_token facts.
+# ===========================================================================
+
+# System role(s) minted into the join token (tctl tokens add --type=...).
+# The calling role passes the type it needs, e.g. proxy,node | windowsdesktop.
+teleport_join_token_type: "proxy,node"
+
+# TTL for the auto-minted join token.
+teleport_join_token_ttl: "1h"
+
+# Values already supplied by the caller are respected: each bootstrap step is
+# skipped when its target variable is non-empty.
+teleport_ca_pin: []
+teleport_join_token: ""
+
+# Auth host the tctl calls are delegated to (defaults to the first Auth node).
+teleport_autojoin_auth_host: "{{ groups['teleport_auth'][0] | default('') }}"
+# tctl binary on the Auth host (derived from the teleport binary path).
+teleport_tctl_bin: "{{ teleport_bin | dirname }}/tctl"
